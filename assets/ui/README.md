@@ -1,0 +1,9 @@
+# AC Fame atelier artwork
+
+`atelier-header.png` — 1536 × 1024 PNG, generated with the built-in ImageGen tool on 4 November 2026. Used by `ReplicatedStorage.ACFame.FameUI` as a decorative header, Roblox image asset `123889866400587`.
+
+All UI text, fields, buttons and status indicators remain native Roblox controls. No interaction or essential label is baked into the image. The original asset is retained here so it can be re-uploaded for another experience owner.
+
+## Generation prompt
+
+Use case: stylized-concept. Asset type: production 2D illustration used as a header artwork in a premium Roblox game UI called AC Fame, a nocturnal neon mural art plaza. Create one WIDE LANDSCAPE illustration, aspect ratio about 3:2. This is a usable raster artwork asset, NOT a screenshot, NOT a UI mockup. Scene: polished art-directed close-up of a single elegant black lacquer calligraphy paintbrush with a slim brushed-gold ferrule crossing diagonally in the RIGHT HALF, a small sweeping stroke of luminous turquoise ink and a translucent violet ribbon of pigment behind it, a few delicate cherry-blossom petals near the upper right. Color palette: near-black indigo #100d1d, amethyst, very restrained turquoise #56e5d0, tiny soft warm gold. Material: tactile premium 3D game collectible render, soft cinematic studio lighting, crisp silhouette, subtle beautiful volumetric ink, refined and quiet not busy. Composition: entire LEFT 60 percent is almost empty DARK INDIGO negative space so live UI text can be placed over it. Keep all artwork in the RIGHT 40 percent, no object touching outer edges. Background smoothly darkens to solid near-black indigo at every edge, especially bottom. No text, no letters, no logo, no typography, no buttons, no panels, no borders, no stars, no badges, no coins, no extra objects, no watermark. The artwork should feel bespoke to a neon artist's atelier rather than generic cyberpunk or AI fantasy. High-end game UI art, polished and restrained.

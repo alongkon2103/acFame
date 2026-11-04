@@ -89,6 +89,15 @@ gap=true บอก cursor เก่ากว่า retention แต่ Roblox �
 
 ## ผลทดสอบ 4 พฤศจิกายน 2026
 
+### UI แบบ atelier
+
+- `src/FameUI.luau` -> ModuleScript `ReplicatedStorage.ACFame.FameUI`; ใช้ร่วมกับ FameClient รุ่นใหม่
+- งานภาพหัวแผง `assets/ui/atelier-header.png` สร้างด้วย ImageGen และอัปโหลดเป็น Roblox image `123889866400587`; prompt และข้อมูล asset อยู่ใน `assets/ui/README.md`
+- HUD ปกติเป็นแถบเล็ก แผงเชื่อมต่อ/Overlay รวมกัน และแผง Demo แสดงเฉพาะ Studio ใช้ native text/controls ทั้งหมด จอสั้นเลื่อน body ได้ จอสัมผัสย้ายปุ่มกล้องออกจากจอยเดิน
+- `tests/FameUI.spec.luau` เป็น assert self-check สำหรับรันผ่าน Studio Client ตรวจสถานะ permission, loading/error/live, overlay, camera labels และการซ่อน/คืน chrome โดยไม่เรียกเครือข่าย
+- ตรวจภาพจริงที่ desktop viewport 957×598, iPhone 17 Pro simulator แนวนอน 749×381 และแนวตั้ง 401×777; คืน simulator เป็น default หลังทดสอบ ไม่ใช่ผลทดสอบบนโทรศัพท์จริง
+- ทดสอบ Connect LIVE จริง, empty-input recovery, เลือก URL ครบ, สลับกล้อง, เปิดแผง Demo และซ่อน/คืน HUD ระหว่างคัตซีนแล้ว
+
 ### Streaming Overlay
 
 แมพใช้ 1 คนต่อเซิร์ฟเวอร์ เมื่อกด Connect เกมส่ง Roblox UserId ฝั่ง Server ไป backend แล้วส่งลิงก์ `/overlay?view=...` กลับให้ผู้เล่นคนนั้นเท่านั้น ในหน้า Connect มีช่องลิงก์กับปุ่มเลือกลิงก์ จากนั้นกด Ctrl+C / Cmd+C เพื่อนำไปวางใน OBS Browser Source หรือแหล่งเว็บใน TikTok LIVE Studio ขนาด 640 x 176
