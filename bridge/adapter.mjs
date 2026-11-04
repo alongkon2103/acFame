@@ -1,5 +1,6 @@
 import { TikTokLiveConnection } from 'tiktok-live-connector';
 import { normalize } from './normalize.mjs';
+import { likePhotos } from './like-photo.mjs';
 
 export function adapter(gifts, assets, Connection = TikTokLiveConnection) {
   return (name, emit, terminal, metrics) => {
@@ -7,6 +8,8 @@ export function adapter(gifts, assets, Connection = TikTokLiveConnection) {
       enableExtendedGiftInfo: false, processInitialData: false,
       ...(process.env.SIGN_API_KEY ? { signApiKey: process.env.SIGN_API_KEY } : {}),
     });
+    const photos = process.env.TEST_LIKES_PHOTO === 'true' ? likePhotos(emit, assets, metrics) : null;
+    if (photos) connection.on('like', data => { void photos.accept(data); });
     for (const [eventName, kind] of [['chat','comment'], ['follow','follow'], ['gift','gift']]) {
       connection.on(eventName, data => {
         const event = normalize(kind, data, gifts, assets);
@@ -17,6 +20,6 @@ export function adapter(gifts, assets, Connection = TikTokLiveConnection) {
     connection.on('error', () => terminal('ERROR'));
     connection.on('disconnected', () => terminal('DISCONNECTED'));
     connection.on('streamEnd', () => terminal('OFFLINE'));
-    return { connect: () => connection.connect(), close: () => connection.disconnect() };
+    return { connect: () => connection.connect(), close: () => { photos?.close(); connection.disconnect(); } };
   };
 }
