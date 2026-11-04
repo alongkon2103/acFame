@@ -6,10 +6,14 @@ import {mapping} from './normalize.mjs';
 import {adapter} from './adapter.mjs';
 import {Sessions} from './sessions.mjs';
 
-test('verified gift IDs map to the correct effect once per finished streak',async()=>{
+test('Euler TH gift IDs and actual gift types trigger each effect without duplicates',async()=>{
   const config=readFileSync(new URL('./.env.example',import.meta.url),'utf8');
   const gifts=mapping(config.match(/^GIFT_IDS=(.*)$/m)[1]);
   assert.deepEqual(gifts,{'5655':'rose','9947':'necklace','5879':'donut','5660':'heart'});
+  const catalog=JSON.parse(readFileSync(new URL('./fixtures/euler-th-gifts.json',import.meta.url),'utf8'));
+  assert.deepEqual(catalog.gifts.map(g=>[g.id,g.name,g.diamond_count,g.type]),[
+    [5655,'Rose',1,1],[5660,'Hand Heart',100,2],[5879,'Doughnut',30,1],[9947,'Friendship Necklace',10,1],
+  ]);
   let upstream;
   class Provider extends EventEmitter {
     constructor(){super();upstream=this;}
@@ -20,15 +24,16 @@ test('verified gift IDs map to the correct effect once per finished streak',asyn
   try {
     const token='gift-test-'.padEnd(32,'a'),view='1'.repeat(64);
     sessions.connect(token,'channel',view);await new Promise(r=>setImmediate(r));
-    for(const [id,kind] of Object.entries(gifts)){
-      const data={giftId:Number(id),gift:{type:1},repeatEnd:0,repeatCount:3,user:{displayId:'viewer'},common:{msgId:'gift-'+id}};
+    for(const gift of catalog.gifts){
+      const id=gift.id,kind=gifts[id];
+      const data={giftId:String(id),gift:{type:gift.type,name:gift.name,diamondCount:gift.diamond_count},repeatEnd:0,repeatCount:3,user:{displayId:'viewer'},common:{msgId:'gift-'+id}};
       upstream.emit('gift',data);
-      assert.equal(sessions.overlayState(view).counts[kind],0,'Unfinished streak must not trigger');
+      assert.equal(sessions.overlayState(view).counts[kind],gift.type===1?0:1,'Only type 1 waits for streak completion');
       upstream.emit('gift',{...data,repeatEnd:1});upstream.emit('gift',{...data,repeatEnd:1});
       assert.equal(sessions.overlayState(view).counts[kind],1,'Repeated delivery must not trigger twice');
     }
     const events=sessions.poll(token,0).events;
-    assert.deepEqual(events.map(e=>e.kind),Object.values(gifts));
+    assert.deepEqual(events.map(e=>e.kind),catalog.gifts.map(g=>gifts[g.id]));
     assert.ok(events.every(e=>e.avatarAssetId==='123'));
     assert.equal(sessions.setOverlay(token,'heart:gift-5660',1),true);
     assert.equal(sessions.overlay(view).kind,'heart');

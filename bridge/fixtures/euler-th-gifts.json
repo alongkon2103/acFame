@@ -1,0 +1,35 @@
+{
+  "source": "https://api.eulerstream.com/webcast/gifts?region=TH",
+  "checkedDate": "2026-11-05",
+  "region": "TH",
+  "gifts": [
+    {
+      "id": 5655,
+      "name": "Rose",
+      "diamond_count": 1,
+      "type": 1,
+      "combo": true
+    },
+    {
+      "id": 5660,
+      "name": "Hand Heart",
+      "diamond_count": 100,
+      "type": 2,
+      "combo": true
+    },
+    {
+      "id": 5879,
+      "name": "Doughnut",
+      "diamond_count": 30,
+      "type": 1,
+      "combo": true
+    },
+    {
+      "id": 9947,
+      "name": "Friendship Necklace",
+      "diamond_count": 10,
+      "type": 1,
+      "combo": true
+    }
+  ]
+}
