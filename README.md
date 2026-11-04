@@ -14,7 +14,28 @@
 `src/` เป็นสำเนา scripts ที่อ่านจาก Studio ไม่ใช่ระบบ sync อัตโนมัติ อย่าใส่ key จริงลง Git
 ตอนตรวจพบ LiveEnabled=true แต่ BridgeUrl/BridgeKey ว่าง, AllowedUserIds ว่าง และ HTTP Requests ปิดอยู่
 
-## ติดตั้งบน VPS (Linux + Docker + โดเมน)
+## Linux + PM2 + Cloudflare Tunnel
+
+บน VPS ใช้ Node.js 22, โฟลเดอร์ `/var/www/acFame/bridge` และ `.env` สิทธิ์ 600
+
+```sh
+cd /var/www/acFame/bridge
+npm ci
+npm test
+# ครั้งแรก: คัดลอก .env.example เป็น .env และตั้ง FAME_KEY แบบสุ่มก่อน
+pm2 start npm --name ac-fame-bridge -- start
+pm2 save
+curl --fail http://127.0.0.1:3210/health
+```
+
+Cloudflare Tunnel ต้องชี้ hostname ที่อนุมัติไป `http://127.0.0.1:3210` ไม่ต้องเปิดพอร์ต 3210 ออกอินเทอร์เน็ต และไม่จำเป็นต้องมี Docker/Caddy
+ถ้ารัน cloudflared ผ่าน PM2 ใช้ `--interpreter none` และตรวจว่า PM2 startup service เปิดแล้ว
+อย่าใส่ Cloudflare Access login หรือ browser challenge บน API นี้ เพราะ Roblox Server ไม่มี browser สำหรับยืนยันตัวตน; endpoint private ตรวจ X-Fame-Key แทน
+
+อัปเดตโค้ดภายหลัง: `git pull --ff-only`, `npm ci`, `npm test`, `pm2 restart ac-fame-bridge`
+การ restart ทำ RAM sessions หาย ผู้ใช้ต้อง Connect ใหม่
+
+## ทางเลือก: ติดตั้งบน VPS (Linux + Docker + โดเมน)
 
 1. ชี้ DNS โดเมน เช่น `live.your-domain.com` ไป VPS และเปิดพอร์ต 80/443
 2. อัปโหลดโฟลเดอร์โปรเจกต์ไป VPS แล้วเข้า `bridge/`
