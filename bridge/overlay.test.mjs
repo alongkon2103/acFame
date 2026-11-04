@@ -71,11 +71,14 @@ test('personal overlay links are ready before Connect and never open a TikTok se
   const idle=await(await fetch(base+'/overlay/state?view='+view)).json();
   assert.equal(idle.status,'DISCONNECTED');assert.equal(idle.current,null);assert.equal(idle.counts.rose,0);
   assert.equal((await fetch(base+first.activityPath)).status,200);
-  for(const gift of ['rose','necklace','donut','heart']) {
+  for(const gift of ['rose','necklace','donut']) {
     const image=await fetch(base+'/overlay/assets/'+gift+'.webp');
     assert.equal(image.status,200);assert.equal(image.headers.get('content-type'),'image/webp');
     const bytes=Buffer.from(await image.arrayBuffer());assert.equal(bytes.toString('ascii',8,12),'WEBP');
   }
+  const handHeart=await fetch(base+'/overlay/assets/hand-heart.png');
+  assert.equal(handHeart.status,200);assert.equal(handHeart.headers.get('content-type'),'image/png');
+  assert.equal(Buffer.from(await handHeart.arrayBuffer()).subarray(1,4).toString(),'PNG');
   assert.equal((await fetch(base+'/overlay/assets/unknown.webp')).status,401);
   assert.equal('photoTest' in idle,false);
   const connected=await(await fetch(base+'/connect',{method:'POST',headers,body:JSON.stringify({username:'channel',ownerId:123})})).json();

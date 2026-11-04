@@ -156,7 +156,7 @@ local function showChampion(e,quiet)
 		end
 	end
 	label(championRoot,e.name,UDim2.fromScale(.08,.77),UDim2.fromScale(.84,.11),white)
-	label(championRoot,"Heart 100 · Replaced by the next Top Supporter",UDim2.fromScale(.1,.9),UDim2.fromScale(.8,.07),gold)
+	label(championRoot,"Hand Hearts 100 · Replaced by the next Top Supporter",UDim2.fromScale(.1,.9),UDim2.fromScale(.8,.07),gold)
 	if quiet then return end
 	cinematicPanels=true
 	ui:setCinematic(true)

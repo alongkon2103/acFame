@@ -41,7 +41,7 @@ Cloudflare Tunnel ต้องชี้ hostname ที่อนุมัติ�
 2. อัปโหลดโฟลเดอร์โปรเจกต์ไป VPS แล้วเข้า `bridge/`
 3. `cp .env.example .env` และ `chmod 600 .env`
 4. สร้าง key ด้วย `openssl rand -hex 32` แล้วใส่ FAME_KEY ใน `.env` อย่าส่ง key ลงแชต
-5. ตั้ง GIFT_IDS ด้วย ID ที่ตรวจจากช่องจริง เช่น JSON ที่จับคู่ ID กับ rose/necklace/donut/heart ไม่มี gift ID ที่เดาสุ่มมาให้
+5. ตั้ง GIFT_IDS ตาม bridge/.env.example: 5655 -> rose, 9947 -> necklace, 5879 -> donut, 5660 -> heart (Hand Hearts 100 coins)
 6. ตั้ง AVATAR_ASSETS เป็น JSON handle -> asset ID ที่ experience มีสิทธิ์โหลด ถ้าไม่มีรูปจะใช้ @ ตาม client เดิม
 7. `npm ci` (ถ้ายังไม่มี package-lock.json ให้ใช้ `npm install` เพื่อสร้าง lockfile ก่อน) แล้ว `npm test`
 8. `docker build -t ac-fame-bridge .`
@@ -129,5 +129,7 @@ FameServer แจ้ง POST /overlay/current เมื่อเริ่ม dis
 - แก้ enableExtendedGiftInfo=false เพราะการดึง catalog ก่อน connect ถูก provider ปฏิเสธ; ไม่จำเป็นต่อ mapping แบบ gift ID
 - รองรับ user.displayId และ gift.type ตาม protobuf ที่พบจริง พร้อม regression tests
 - ยืนยันจาก LIVE: gift 5655 / Rose / 1 diamond / type 1; ตั้ง GIFT_IDS บน VPS ให้ 5655 -> rose แล้ว รอบสุดท้าย client รับและแสดง comment 7, follow 1 และ rose 2 รวม 10 รายการ ขณะสถานะยังเป็น LIVE
-- ยังไม่ยืนยัน LIVE จริงสำหรับ necklace/donut/heart, gift IDs อีก 3 แบบ, avatar assets ใน published experience, permission ของผู้เล่นจริง, สอง Roblox servers พร้อมกัน และการตัดเน็ตจริง
+- วันที่ 5 พฤศจิกายน 2026 ตรวจ ID 9947 / Friendship Necklace จากแคตตาล็อก [TikTokGame](https://tiktokgame.vn/gift/index.php) และ [gift dump](https://gist.github.com/Bluscream/bc20c5e469eda2129d229242e28abe1c/76d78eb777ca4b44f155aeed0a26f30eb90e8c21); 5879 / Doughnut และ 5660 / Hand Hearts จาก [Lumia Stream](https://dev.lumiastream.com/docs/alerts/tiktok/alert-tiktok-gift) ตั้งค่าบน VPS ครบ 4 แบบแล้ว
+- ทดสอบ payload จำลองผ่าน provider adapter -> normalize -> Sessions -> poll/overlay: ทุก ID จับคู่ถูก, รอจบ streak, ไม่แสดงซ้ำ, 5586 / Hearts เดิมไม่เรียกเอฟเฟกต์ Hand Hearts; tests 15/15 ผ่าน และตรวจ PhotoPainter 3 ขนาดใน Studio ด้วย asset fixture ได้ครบ 32 bands
+- ยังไม่ยืนยันการส่ง LIVE จริงสำหรับ necklace/donut/hand hearts, avatar assets ใน published experience, permission ของผู้เล่นจริง, สอง Roblox servers พร้อมกัน และการตัดเน็ตจริง; ถ้าไม่มี AVATAR_ASSETS ของผู้ชม เกมยังแสดง @ แทนรูป ไม่ใช่รูป TikTok อัตโนมัติ
 - ยังไม่ได้ Publish แมพ; ไม่มี secret ใน repository และ src/Config.luau ยังเป็น template key ว่าง อย่านำ template ไปทับ config ที่ตั้งใน Studio

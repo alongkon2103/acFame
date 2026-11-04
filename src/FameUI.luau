@@ -105,7 +105,7 @@ function UI.new(player)
 	local demoList=make("ScrollingFrame",self.buttons,{Name="Events",Position=UDim2.fromOffset(12,86),Size=UDim2.new(1,-24,1,-98),BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=2,ScrollBarImageColor3=C.purple,CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollingDirection=Enum.ScrollingDirection.Y})
 	make("UIListLayout",demoList,{Padding=UDim.new(0,6),SortOrder=Enum.SortOrder.LayoutOrder})
 	self.demoButtons={}
-	local entries={{"comment","Your name","Comment",C.paper},{"follow","New follower","Name + follow highlight",C.cyan},{"rose","Rose","Thank-you · 1 coin",C.red},{"necklace","Your photo","Necklace · 10 coins",C.purple},{"donut","Featured portrait","Donut · 30 coins",C.red},{"heart","TOP SUPPORTER","Heart · 100 coins",C.gold}}
+	local entries={{"comment","Your name","Comment",C.paper},{"follow","New follower","Name + follow highlight",C.cyan},{"rose","Rose","Thank-you · 1 coin",C.red},{"necklace","Your photo","Necklace · 10 coins",C.purple},{"donut","Featured portrait","Donut · 30 coins",C.red},{"heart","TOP SUPPORTER","Hand Hearts · 100 coins",C.gold}}
 	for i,entry in ipairs(entries) do
 		local b=button(demoList,entry[1],"",UDim2.new(),UDim2.new(1,0,0,52),C.field) b.LayoutOrder=i
 		text(b,"Index",string.format("%02d",i),11,entry[4],UDim2.fromOffset(12,0),UDim2.fromOffset(24,52),true)

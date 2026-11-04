@@ -10,14 +10,14 @@ export function createServer({ key, sessions, overlaySigningKey }) {
   const secret = Buffer.from(key);
   const overlayHTML=readFileSync(new URL('./overlay.html',import.meta.url));
   const activityHTML=readFileSync(new URL('./activity.html',import.meta.url));
-  const giftImages=new Map(['rose','necklace','donut','heart'].map(name=>['/overlay/assets/'+name+'.webp',readFileSync(new URL('./assets/gifts/'+name+'.webp',import.meta.url))]));
+  const giftImages=new Map(['rose.webp','necklace.webp','donut.webp','hand-heart.png'].map(name=>['/overlay/assets/'+name,readFileSync(new URL('./assets/gifts/'+name,import.meta.url))]));
   const server = http.createServer(async (req, res) => {
     const send = (status, value) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(value)); };
     try {
       const url = new URL(req.url, 'http://localhost');
       if (url.pathname === '/health' && req.method === 'GET') return send(200, { status: 'ok' });
       if(req.method==='GET' && giftImages.has(url.pathname)) {
-        res.writeHead(200,{'Content-Type':'image/webp','Cache-Control':'public, max-age=86400','X-Content-Type-Options':'nosniff'});res.end(giftImages.get(url.pathname));return;
+        res.writeHead(200,{'Content-Type':url.pathname.endsWith('.png')?'image/png':'image/webp','Cache-Control':'public, max-age=86400','X-Content-Type-Options':'nosniff'});res.end(giftImages.get(url.pathname));return;
       }
       if(['/overlay','/overlay/activity'].includes(url.pathname) && req.method==='GET') {
         res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Referrer-Policy':'no-referrer','X-Content-Type-Options':'nosniff'});res.end(url.pathname==='/overlay' ? overlayHTML : activityHTML);return;

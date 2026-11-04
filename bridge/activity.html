@@ -21,8 +21,8 @@ header{padding:0 4px 13px;border-bottom:1px solid #ffffff12;margin-bottom:10px}.
 const params=new URLSearchParams(location.search),rows=document.querySelector('#rows'),statusLabel=document.querySelector('#status'),card=document.querySelector('#card');
 const bubble='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-6 4V6a2 2 0 0 1 2-2Z"/></svg>';
 const follow='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2m4-12v8m-4-4h8"/></svg>';
-const gift=name=>'<img src="/overlay/assets/'+name+'.webp" alt="" width="48" height="48">';
-const definitions=[['comment','Your name','Comment',bubble,'#9847a7'],['follow','Follow highlight','Follow',follow,'#328cb9'],['rose','Thank-you name','Rose',gift('rose'),''],['necklace','Your photo','Friendship Necklace',gift('necklace'),''],['donut','Featured portrait','Doughnut',gift('donut'),''],['heart','Top Supporter','Hearts',gift('heart'),'']];
+const gift=(name,format='webp')=>'<img src="/overlay/assets/'+name+'.'+format+'" alt="" width="48" height="48">';
+const definitions=[['comment','Your name','Comment',bubble,'#9847a7'],['follow','Follow highlight','Follow',follow,'#328cb9'],['rose','Thank-you name','Rose',gift('rose'),''],['necklace','Your photo','Friendship Necklace',gift('necklace'),''],['donut','Featured portrait','Doughnut',gift('donut'),''],['heart','Top Supporter','Hand Hearts',gift('hand-heart','png'),'']];
 const fields=new Map();
 for(const [kind,effect,detail,icon,tone] of definitions){
   const row=document.createElement('div');row.className='row '+kind;
