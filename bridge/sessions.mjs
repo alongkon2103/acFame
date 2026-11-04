@@ -54,6 +54,21 @@ export class Sessions {
     const s = this.items.get(token);
     if (s) { s.closed = true; clearTimeout(s.timer); try { s.connection?.close(); } catch {} this.items.delete(token); }
   }
+  setOverlay(token,id,revision) {
+    const s=this.items.get(token);
+    if(!s || s.closed || !Number.isSafeInteger(revision) || revision<1 || revision<=(s.overlayRevision||0)) return false;
+    const event=s.events.find(e=>e.id===id);
+    if(!event?.profile) return false;
+    s.overlayRevision=revision;
+    s.currentOverlay={id:event.id,kind:event.kind,profile:event.profile,pixels:event.pixels,updatedAt:this.now()};
+    return true;
+  }
+  overlay(channel) {
+    this.sweep();
+    let current=null;
+    for(const s of this.items.values()) if(!s.closed && s.username===channel && s.currentOverlay && (!current || s.currentOverlay.updatedAt>current.updatedAt)) current=s.currentOverlay;
+    return current;
+  }
   sweep() {
     for (const [token, s] of this.items) if (this.now() - s.touched >= this.ttl) this.disconnect(token);
     for (const [token, time] of this.recent) if (this.now() - time >= 3000) this.recent.delete(token);

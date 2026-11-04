@@ -32,6 +32,14 @@ export function normalize(type, data, gifts = {}, assets = {}) {
   let handle = '';
   for (const char of uniqueId) { if (Buffer.byteLength(handle + char) > 80) break; handle += char; }
   const event = { id: `${kind}:${upstream || randomUUID()}`, kind, uniqueId: handle, name: '@' + handle };
+  const count = value => { const n=Number(value); return value !== undefined && value !== null && Number.isSafeInteger(n) && n>=0 ? n : null; };
+  let avatarUrl = null;
+  try {
+    const url = new URL(user.avatarThumb?.urlList?.[0] || user.profilePicture?.urls?.[0] || user.profilePictureUrl);
+    if(url.protocol==='https:' && !url.username && !url.password && !url.port && /(^|\.)tiktokcdn(?:-us)?\.com$/.test(url.hostname) && url.href.length<=4096) avatarUrl=url.href;
+  } catch {}
+  event.profile = {handle,nickname:typeof user.nickname==='string' ? Array.from(user.nickname).slice(0,80).join('') : handle,
+    following:count(user.followInfo?.followingCount),followers:count(user.followInfo?.followerCount),avatarUrl};
   if (Buffer.byteLength(event.id) > 120) return null;
   const asset = Object.hasOwn(assets, handle.toLowerCase()) && assets[handle.toLowerCase()];
   if (asset) event.avatarAssetId = asset;

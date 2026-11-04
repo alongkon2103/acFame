@@ -35,6 +35,20 @@ local function request(path,method,token,body)
 	assert(res.Success,"Bridge HTTP "..res.StatusCode)
 	return Http:JSONDecode(res.Body)
 end
+local displayRevision=0
+local function updateOverlay(e)
+	local token=sessionToken
+	if not token then return end
+	displayRevision+=1
+	local revision=displayRevision
+	task.spawn(function()
+		local ok=pcall(request,"/overlay/current","POST",token,{id=e.id,revision=revision})
+		if not ok and sessionToken==token and displayRevision==revision then
+			task.wait(.5)
+			if sessionToken==token and displayRevision==revision then pcall(request,"/overlay/current","POST",token,{id=e.id,revision=revision}) end
+		end
+	end)
+end
 local function disconnect()
 	generation+=1
 	local old=sessionToken sessionToken=nil connectionOwner=nil busy=false
@@ -72,7 +86,7 @@ local function accept(raw, trustedDemo, expectedGeneration)
 	local e=normalize(raw,trustedDemo)
 	if expectedGeneration and generation~=expectedGeneration then return end
 	if not e then return end
-	if e.kind=="heart" then champion=e event:FireAllClients("champion",e) return end
+	if e.kind=="heart" then champion=e event:FireAllClients("champion",e) updateOverlay(e) return end
 	if #queue >= Config.MaxQueue then
 		-- Prefer gifts over comments under load; memory stays bounded.
 		local removeIndex
@@ -155,6 +169,7 @@ task.spawn(function()
 		if #queue>0 then
 			current=table.remove(queue,1)
 			event:FireAllClients("display",current)
+			updateOverlay(current)
 			task.wait((current.kind=="necklace" or current.kind=="donut") and (Config.PhotoDisplaySeconds or 14) or Config.DisplaySeconds)
 		else task.wait(0.2) end
 	end

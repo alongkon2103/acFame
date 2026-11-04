@@ -1,23 +1,36 @@
 import http from 'node:http';
 import { timingSafeEqual } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
+import { readFileSync } from 'node:fs';
 import { Sessions } from './sessions.mjs';
 import { username, mapping } from './normalize.mjs';
 
-export function createServer({ key, sessions }) {
+export function createServer({ key, sessions, overlayToken }) {
   if (typeof key !== 'string' || key.length < 20) throw Error('FAME_KEY must contain at least 20 characters');
   const secret = Buffer.from(key);
+  const overlayHTML=readFileSync(new URL('./overlay.html',import.meta.url));
   const server = http.createServer(async (req, res) => {
     const send = (status, value) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(value)); };
     try {
       const url = new URL(req.url, 'http://localhost');
       if (url.pathname === '/health' && req.method === 'GET') return send(200, { status: 'ok' });
+      if(url.pathname==='/overlay' && req.method==='GET') {
+        res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Referrer-Policy':'no-referrer','X-Content-Type-Options':'nosniff'});res.end(overlayHTML);return;
+      }
+      if(url.pathname==='/overlay/state' && req.method==='GET') {
+        const supplied=Buffer.from(url.searchParams.get('token')||'');
+        const expected=Buffer.from(overlayToken||'');
+        if(expected.length<32 || supplied.length!==expected.length || !timingSafeEqual(expected,supplied)) return send(401,{error:'Unauthorized'});
+        const channel=username(url.searchParams.get('channel'));
+        if(!channel) return send(400,{error:'INVALID_USERNAME'});
+        return send(200,{current:sessions.overlay(channel)});
+      }
       const supplied = Buffer.from(req.headers['x-fame-key'] || '');
       if (supplied.length !== secret.length || !timingSafeEqual(secret, supplied)) return send(401, { error: 'Unauthorized' });
       if (url.pathname === '/metrics' && req.method === 'GET') return send(200, { activeSessions: sessions.items.size, ...sessions.metrics });
       const token = req.headers['x-fame-session'];
       if (typeof token !== 'string' || !/^[a-zA-Z0-9-]{32,100}$/.test(token)) return send(400, { error: 'INVALID_SESSION' });
-      if (!['/connect','/disconnect','/session/events'].includes(url.pathname)) return send(404, { error: 'Not found' });
+      if (!['/connect','/disconnect','/session/events','/overlay/current'].includes(url.pathname)) return send(404, { error: 'Not found' });
       if (req.method !== (url.pathname === '/session/events' ? 'GET' : 'POST')) return send(405, { error: 'METHOD_NOT_ALLOWED' });
       if (req.method === 'POST') {
         let size = 0; const chunks = [];
@@ -25,6 +38,11 @@ export function createServer({ key, sessions }) {
         let body;
         try { body = JSON.parse(Buffer.concat(chunks).toString()); } catch { return send(400, { error: 'INVALID_JSON' }); }
         if (url.pathname === '/disconnect') { sessions.disconnect(token); return send(200, { status: 'DISCONNECTED' }); }
+        if(url.pathname==='/overlay/current') {
+          if(typeof body?.id!=='string' || body.id.length>120 || !Number.isSafeInteger(body.revision) || body.revision<1) return send(400,{error:'INVALID_DISPLAY'});
+          if(!sessions.setOverlay(token,body.id,body.revision)) return send(409,{error:'STALE_OR_UNKNOWN_DISPLAY'});
+          return send(200,{status:'OK'});
+        }
         const name = username(body?.username);
         if (!name) return send(400, { error: 'INVALID_USERNAME' });
         return send(202, sessions.connect(token, name));
@@ -40,7 +58,7 @@ export function createServer({ key, sessions }) {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const { adapter } = await import('./adapter.mjs');
   const sessions = new Sessions(adapter(mapping(process.env.GIFT_IDS), mapping(process.env.AVATAR_ASSETS, true)));
-  const server = createServer({ key: process.env.FAME_KEY, sessions });
+  const server = createServer({ key: process.env.FAME_KEY, sessions, overlayToken:process.env.OVERLAY_TOKEN });
   const sweep = setInterval(() => sessions.sweep(), 30000); sweep.unref();
   server.listen(Number(process.env.PORT || 3210), process.env.HOST || '127.0.0.1', () => console.log('AC Fame bridge listening'));
   for (const signal of ['SIGINT','SIGTERM']) process.once(signal, () => {

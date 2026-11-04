@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="th">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>AC Fame · คนที่กำลังวาด</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;background:transparent;overflow:hidden;color:#fff;font-family:Tahoma,"Noto Sans Thai",Arial,sans-serif}
+body{width:100vw;min-height:160px;display:flex;align-items:flex-start;padding:8px}
+.profile{position:relative;width:min(100%,624px);display:grid;grid-template-columns:100px minmax(0,1fr);align-items:center;gap:20px;padding:18px 22px;background:linear-gradient(115deg,rgba(17,12,36,.96),rgba(27,12,48,.91));border:1px solid #ae5bff80;border-radius:8px;box-shadow:inset 0 1px 0 #e0c6ff15,0 0 14px #921cff20;transition:opacity .2s}
+.profile:after{content:"";position:absolute;bottom:-1px;left:22px;right:22px;height:2px;background:linear-gradient(90deg,#28e5d6,#9e4aff 55%,#f342dc);box-shadow:0 0 8px #b63cff99}
+.profile[hidden]{display:none}.identity{min-width:0}.topline{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;font-size:10px;line-height:1.4;font-weight:700}.brand{color:#c897ff;letter-spacing:3px}.activity{color:#47e7da;white-space:nowrap;display:flex;align-items:center;gap:6px}.activity:before{content:"";width:5px;height:5px;border-radius:50%;background:#47e7da;box-shadow:0 0 6px #47e7da}
+.name{min-width:0;margin:0 0 3px;font-size:28px;font-weight:800;line-height:1.25;letter-spacing:-.4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.handle{font-size:14px;color:#b7a7d1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stats{display:flex;gap:22px;align-items:baseline;margin-top:12px;white-space:nowrap;font-size:11px;color:#a99bbd}.stats>span+span{border-left:1px solid #ffffff1a;padding-left:22px}.stats b{font-size:17px;font-weight:700;margin-right:6px;color:#ede6fa;font-variant-numeric:tabular-nums}
+.portrait{width:100px;height:100px;border:2px solid #3ce8d0;border-radius:6px;box-shadow:0 0 12px #38dccc20;overflow:hidden;position:relative;background:#211337;color:#ceaeff;display:grid;place-items:center;font-size:44px;font-weight:700}.portrait img,.portrait canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.portrait canvas{image-rendering:auto}.portrait [hidden]{display:none}
+@media(max-width:520px){body{padding:6px}.profile{grid-template-columns:80px minmax(0,1fr);gap:14px;padding:16px}.portrait{width:80px;height:80px}.name{font-size:23px}.handle{font-size:12px}.topline{font-size:9px}.brand{letter-spacing:2px}.stats{gap:12px;font-size:10px}.stats>span+span{padding-left:12px}.stats b{font-size:15px}}
+@media(prefers-reduced-motion:reduce){.profile{transition:none}}
+</style>
+<section class="profile" id="profile" hidden aria-label="ผู้ชมที่กำลังเขียนหรือวาด" aria-live="polite">
+  <div class="portrait"><span id="initial" aria-hidden="true">@</span><canvas id="pixels" width="32" height="32" hidden></canvas><img id="avatar" alt="" referrerpolicy="no-referrer" hidden></div>
+  <div class="identity"><div class="topline"><span class="brand">AC FAME</span><span class="activity" id="activity">กำลังสร้างผลงาน</span></div><h1 class="name" id="nickname"></h1><div class="handle" id="handle"></div><div class="stats"><span><b id="following">—</b>กำลังติดตาม</span><span><b id="followers">—</b>ผู้ติดตาม</span></div></div>
+</section>
+<script>
+const params=new URLSearchParams(location.search),profile=document.querySelector('#profile'),avatar=document.querySelector('#avatar'),pixels=document.querySelector('#pixels');
+const count=value=>Number.isSafeInteger(value)&&value>=0?value.toLocaleString('th-TH'):'—';
+let currentID='',lastSuccess=Date.now();
+function paint(current){
+  if(!current){profile.hidden=true;currentID='';return;}
+  if(current.id===currentID)return;
+  currentID=current.id;const p=current.profile;
+  document.querySelector('#nickname').textContent=p.nickname||p.handle;
+  document.querySelector('#handle').textContent='@'+p.handle;
+  document.querySelector('#following').textContent=count(p.following);
+  document.querySelector('#followers').textContent=count(p.followers);
+  document.querySelector('#activity').textContent=['necklace','donut','heart'].includes(current.kind)?'กำลังวาดรูป':'กำลังเขียนชื่อ';
+  document.querySelector('#initial').textContent=Array.from(p.nickname||p.handle||'@')[0];
+  avatar.hidden=true;avatar.removeAttribute('src');pixels.hidden=true;
+  if(current.pixels?.length===1024){
+    const ctx=pixels.getContext('2d'),data=ctx.createImageData(32,32);
+    current.pixels.forEach((v,i)=>{data.data[i*4]=v>>>16;data.data[i*4+1]=(v>>>8)&255;data.data[i*4+2]=v&255;data.data[i*4+3]=255;});ctx.putImageData(data,0,0);pixels.hidden=false;
+  }
+  if(p.avatarUrl){const id=current.id;avatar.onload=()=>{if(currentID===id)avatar.hidden=false;};avatar.onerror=()=>{avatar.hidden=true;};avatar.src=p.avatarUrl;}
+  profile.hidden=false;
+}
+async function poll(){
+  try{const response=await fetch('/overlay/state?'+new URLSearchParams({channel:params.get('channel')||'',token:params.get('token')||''}),{cache:'no-store',signal:AbortSignal.timeout(5000)});if(!response.ok)throw Error('Unavailable');paint((await response.json()).current);lastSuccess=Date.now();}
+  catch{if(Date.now()-lastSuccess>8000){profile.hidden=true;currentID='';}}
+  setTimeout(poll,500);
+}
+if(params.get('preview')==='1')paint({id:'preview',profile:{nickname:'ตัวอย่าง Overlay',handle:'preview',following:null,followers:null}});else poll();
+</script>
+</html>

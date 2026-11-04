@@ -1,0 +1,41 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {normalize} from './normalize.mjs';
+import {Sessions} from './sessions.mjs';
+import {createServer} from './server.mjs';
+const token='a'.repeat(32),other='b'.repeat(32),readToken='r'.repeat(40);
+const adapter=()=>({connect:async()=>{},close(){}});
+test('profile contains only real display metadata and validates avatar URL',()=>{
+  const event=normalize('comment',{user:{displayId:'viewer',nickname:'คนบ้านMinecraft2001',followInfo:{followingCount:'210',followerCount:43},avatarThumb:{urlList:['https://p16-common-sign.tiktokcdn.com/avatar']}},common:{msgId:'1'}});
+  assert.equal(event.profile.nickname,'คนบ้านMinecraft2001');
+  assert.equal(event.profile.following,210);assert.equal(event.profile.followers,43);
+  assert.ok(event.profile.avatarUrl.startsWith('https://'));
+  const missing=normalize('follow',{user:{displayId:'a',avatarThumb:{urlList:['https://evil.example/a']}}});
+  assert.equal(missing.profile.followers,null);assert.equal(missing.profile.avatarUrl,null);
+});
+test('overlay follows displayed event, not newest ingest; revision and sessions remain isolated',()=>{
+  const s=new Sessions(adapter);s.connect(token,'channel');s.connect(other,'another');
+  const e=normalize('comment',{user:{displayId:'first'},msgId:'1'});
+  s.push(s.items.get(token),e);s.push(s.items.get(token),normalize('comment',{user:{displayId:'next'},msgId:'2'}));
+  assert.equal(s.overlay('channel'),null);
+  assert.equal(s.setOverlay(token,e.id,2),true);assert.equal(s.overlay('channel').profile.handle,'first');
+  assert.equal(s.setOverlay(token,'comment:2',1),false);
+  assert.equal(s.setOverlay(other,e.id,1),false);assert.equal(s.overlay('another'),null);
+  s.disconnect(token);assert.equal(s.overlay('channel'),null);s.close();
+});
+test('overlay read token cannot connect or mutate; current updates require session auth',async t=>{
+  const s=new Sessions(adapter),key='secret'.repeat(6);
+  const server=createServer({key,sessions:s,overlayToken:readToken});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+  t.after(()=>{s.close();server.closeAllConnections();server.close();});
+  const base=`http://127.0.0.1:${server.address().port}`,headers={'X-Fame-Key':key,'X-Fame-Session':token};
+  assert.equal((await fetch(base+'/overlay')).status,200);
+  assert.equal((await fetch(base+'/overlay/state?channel=channel')).status,401);
+  const state=()=>fetch(base+`/overlay/state?channel=channel&token=${readToken}`);
+  assert.equal((await state()).status,200);
+  s.connect(token,'channel');s.push(s.items.get(token),normalize('comment',{user:{displayId:'viewer'},msgId:'1'}));
+  assert.equal((await fetch(base+'/overlay/current',{method:'POST',headers:{'X-Fame-Key':readToken},body:'{}'})).status,401);
+  const update=await fetch(base+'/overlay/current',{method:'POST',headers,body:JSON.stringify({id:'comment:1',revision:1})});assert.equal(update.status,200);
+  const body=await(await state()).json();assert.equal(body.current.profile.handle,'viewer');
+  assert.equal(JSON.stringify(body).includes(token),false);
+  assert.equal((await fetch(base+'/overlay/current',{method:'POST',headers,body:JSON.stringify({id:'forged',revision:2})})).status,409);
+});

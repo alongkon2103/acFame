@@ -89,6 +89,15 @@ gap=true บอก cursor เก่ากว่า retention แต่ Roblox �
 
 ## ผลทดสอบ 4 พฤศจิกายน 2026
 
+### Streaming Overlay
+
+เปิด `/overlay?channel=ชื่อช่อง&token=OVERLAY_TOKEN` ใน OBS Browser Source หรือแหล่งเว็บใน TikTok LIVE Studio ขนาด 640 x 176 พื้นหลังด้านนอกโปร่งใส มีกรอบธีมม่วง/ฟ้า AC Fame
+ตั้ง OVERLAY_TOKEN แบบสุ่มอย่างน้อย 32 ตัวอักษรใน bridge/.env แยกจาก FAME_KEY; token นี้อ่านได้เฉพาะข้อมูลโปรไฟล์ที่กำลังแสดง ไม่ใช้สั่ง Connect หรือเข้าถึงคิว/session token
+FameServer แจ้ง POST /overlay/current เมื่อเริ่ม display/champion จริง Overlay จึงแสดงคนที่กำลังวาด ไม่ใช่คนล่าสุดที่กดไลก์เข้า backend (มีระยะ polling ประมาณ 0.5 วินาที)
+แสดง nickname, @handle, avatar, following/follower counts ที่ TikTok ส่งมา ถ้าไม่มีจำนวนแสดง — ไม่เดาค่า; ไม่มีงาน/ตัดการเชื่อมต่อจะซ่อน Overlay
+ใช้ `?preview=1` แทน query อื่นเพื่อดูดีไซน์ตัวอย่าง ไม่มีข้อมูลผู้ชมจริง หากมีหลาย Roblox servers ใช้ช่องเดียวกัน Overlay เลือกงานที่เริ่มล่าสุดในช่องนั้น
+หลังเปลี่ยน FameServer ใน Studio ต้อง Save/Publish ให้เกมจริงใช้สคริปต์ใหม่; ห้ามนำ src/Config.luau key ว่างไปทับ config ที่ตั้งไว้
+
 ### โหมดทดสอบใจ 15 ครั้ง -> รูป
 
 ตั้ง `TEST_LIKES_PHOTO=true` ใน bridge/.env แล้ว restart Backend และ Connect ใหม่
