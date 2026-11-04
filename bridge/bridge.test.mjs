@@ -23,6 +23,11 @@ test('normalization, username validation and streak tiers', () => {
   assert.equal(normalize('comment', null), null);
   assert.ok(Buffer.byteLength(normalize('comment', {uniqueId:'ท'.repeat(100)}).uniqueId) <= 80);
 });
+test('current provider protobuf user.displayId becomes the viewer handle', () => {
+  const event = normalize('comment', {user:{displayId:'viewer_actual',nickname:'Not the handle'},common:{msgId:'9876543210987654321'}});
+  assert.equal(event?.uniqueId,'viewer_actual');
+  assert.equal(event?.name,'@viewer_actual');
+});
 test('provider adapter forwards actual event names, maps gifts and terminal states', async () => {
   let upstream;
   class FakeConnection extends EventEmitter {

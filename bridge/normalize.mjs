@@ -17,7 +17,8 @@ export function username(value) {
 export function normalize(type, data, gifts = {}, assets = {}) {
   if (!data || typeof data !== 'object') return null;
   const user = data.user || data;
-  if (typeof user.uniqueId !== 'string' || !user.uniqueId) return null;
+  const uniqueId = user.uniqueId || user.displayId;
+  if (typeof uniqueId !== 'string' || !uniqueId) return null;
   let kind = type;
   if (type === 'gift') {
     if (Number(data.giftType ?? data.giftDetails?.giftType) === 1 && !data.repeatEnd) return null;
@@ -29,7 +30,7 @@ export function normalize(type, data, gifts = {}, assets = {}) {
   // Rounded numeric IDs cannot be made stable again; reject rather than deduplicate the wrong gift.
   if (typeof upstream === 'number' && !Number.isSafeInteger(upstream)) return null;
   let handle = '';
-  for (const char of user.uniqueId) { if (Buffer.byteLength(handle + char) > 80) break; handle += char; }
+  for (const char of uniqueId) { if (Buffer.byteLength(handle + char) > 80) break; handle += char; }
   const event = { id: `${kind}:${upstream || randomUUID()}`, kind, uniqueId: handle, name: '@' + handle };
   if (Buffer.byteLength(event.id) > 120) return null;
   const asset = Object.hasOwn(assets, handle.toLowerCase()) && assets[handle.toLowerCase()];
