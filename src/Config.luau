@@ -3,6 +3,9 @@ return {
 	LiveEnabled = true,
 	BridgeUrl = "",
 	BridgeKey = "",
+	WhitelistUrl = "https://aclassstore.com/api/whitelist/check",
+	WhitelistKey = "",
+	WhitelistProductId = "",
 	-- Only the place owner, private server owner, or these users can connect.
 	AllowedUserIds = {},
 	PollSeconds = 1,

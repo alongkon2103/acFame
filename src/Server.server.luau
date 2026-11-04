@@ -4,6 +4,7 @@ local Http = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local Text = game:GetService("TextService")
 local Config = require(script.Parent.FameConfig)
+local Access=require(script.Parent:WaitForChild("AccessControl"))
 local folder = RS:WaitForChild("ACFame")
 local event = folder:WaitForChild("Display")
 local demo = folder:WaitForChild("Demo")
@@ -22,6 +23,7 @@ local overlayUrl=nil
 local overlayOwnerId=nil
 local overlayRequests={}
 local function canControl(p)
+	if not Access.allowed(p) then return false end
 	if Run:IsStudio() then return true end
 	if #Players:GetPlayers()==1 or connectionOwner==p then return true end
 	if game.PrivateServerOwnerId>0 and p.UserId==game.PrivateServerOwnerId then return true end
@@ -117,6 +119,7 @@ local function accept(raw, trustedDemo, expectedGeneration)
 	table.insert(queue,e)
 end
 demo.OnServerEvent:Connect(function(player,kind)
+	if not Access.allowed(player) then return end
 	if kind=="sync" then
 		if current then event:FireClient(player,"display",current) end
 		if champion then event:FireClient(player,"champion",champion,true) end
@@ -191,6 +194,12 @@ control.OnServerEvent:Connect(function(p,action,username)
 			task.wait(Config.PollSeconds)
 		end
 	end)
+end)
+Access.changed.Event:Connect(function(player)
+	if player.Parent~=Players then return end
+	control:FireClient(player,"permission",canControl(player))
+	if Access.allowed(player) then prepareOverlay(player)
+	elseif connectionOwner==player then disconnect() end
 end)
 game:BindToClose(function() if sessionToken then pcall(request,"/disconnect","POST",sessionToken,{}) end end)
 task.spawn(function()

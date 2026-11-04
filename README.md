@@ -98,7 +98,16 @@ gap=true บอก cursor เก่ากว่า retention แต่ Roblox �
 - ตรวจภาพจริงที่ desktop viewport 957×598, iPhone 17 Pro simulator แนวนอน 749×381 และแนวตั้ง 401×777; คืน simulator เป็น default หลังทดสอบ ไม่ใช่ผลทดสอบบนโทรศัพท์จริง
 - ทดสอบ Connect LIVE จริง, empty-input recovery, เลือก URL ครบ, สลับกล้อง, เปิดแผง Demo และซ่อน/คืน HUD ระหว่างคัตซีนแล้ว
 
-### Streaming Overlay
+### Whitelist setup
+
+`src/AccessControl.luau` และ `src/WhitelistPolicy.luau` เป็น ModuleScripts ใน ServerScriptService; `src/Whitelist.server.luau` ใช้แทน WhitelistSystemServer และ `src/Whitelist.client.luau` ใช้แทน WhitelistSystemClient ใน StarterPlayerScripts
+ตั้ง WhitelistUrl, WhitelistKey และ WhitelistProductId ใน FameConfig ฝั่ง Server เท่านั้น เก็บ secret เดิมไว้ อย่าใช้ template key ว่างทับ config จริง
+ตรวจผลจากเว็บ user_whitelist_access: สิทธิ์ permanent หรือวันหมดอายุในอนาคตเท่านั้นจึงเข้าได้; API ล้มเหลว/ข้อมูลผิดปฏิเสธสิทธิ์ ไม่มี local trial หรือ Studio bypass ระบบแจ้ง ACCESS EXPIRED แยกจาก CHECK UNAVAILABLE และตรวจซ้ำอัตโนมัติ
+FameServer ตรวจสิทธิ์ก่อนรับคำสั่ง Connect/Demo และตัด connection เมื่อสิทธิ์ถูกเพิกถอน ผู้เล่นที่ผ่าน Whitelist จะขอลิงก์ Overlay ได้ก่อน Connect TikTok
+รัน `tests/Whitelist.spec.luau` ใน Studio Server เพื่อตรวจ response policy, วันหมดอายุ, permanent และการปลอม replicated attributes โดยใช้โมดูลแยกไม่เปลี่ยนสิทธิ์ผู้เล่นจริง
+ทดสอบใน Studio วันที่ 5 พฤศจิกายน 2026: policy/access self-check ผ่าน, FameUI self-check ผ่าน, บัญชีที่เว็บตอบ expired แสดง ACCESS EXPIRED และส่ง Connect/Demo แล้วไม่ได้สิทธิ์หรือเปิด TikTok session; ไม่มี runtime error โมดูลหาย
+
+### Overlay sources
 
 แมพใช้ 1 คนต่อเซิร์ฟเวอร์ เมื่อเข้าเกม FameServer ขอ POST /overlay/link ด้วย Roblox UserId แล้วส่งลิงก์กลับให้ผู้เล่นคนนั้นเท่านั้น ไม่ต้องกรอกชื่อช่องหรือกด Connect และยังไม่เปิด TikTok socket จัด Browser Sources ก่อน LIVE ได้เลย ในหน้า Live setup มีสองลิงก์ กด Select แล้ว Ctrl+C / Cmd+C เพื่อนำไปวางใน OBS หรือ TikTok LIVE Studio
 - Now Creating: `/overlay?view=...` ขนาด 640 × 176 แสดงคนที่กำลังวาด และแสดงกรอบ Standby ขณะยังไม่มีงานเพื่อใช้จัดจอ

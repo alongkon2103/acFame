@@ -40,6 +40,7 @@ local map=workspace:WaitForChild("ACFame_Backup")
 local BrushWriter=require(folder:WaitForChild("BrushWriter"))
 local ArtistController=require(folder:WaitForChild("ArtistController"))
 local PhotoPainter=require(folder:WaitForChild("PhotoPainter"))
+while player:GetAttribute("GameAccessAllowed")~=true do player:GetAttributeChangedSignal("GameAccessAllowed"):Wait() end
 local painter=ArtistController.new(map,player)
 local writing=nil
 local portraitPainting=nil
