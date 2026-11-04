@@ -21,7 +21,7 @@ export function normalize(type, data, gifts = {}, assets = {}) {
   if (typeof uniqueId !== 'string' || !uniqueId) return null;
   let kind = type;
   if (type === 'gift') {
-    if (Number(data.giftType ?? data.giftDetails?.giftType) === 1 && !data.repeatEnd) return null;
+    if (Number(data.giftType ?? data.giftDetails?.giftType ?? data.gift?.type) === 1 && !data.repeatEnd) return null;
     kind = Object.hasOwn(gifts, String(data.giftId)) ? gifts[String(data.giftId)] : null;
     // shortcut: only verified gift IDs are accepted; populate GIFT_IDS after a live catalog check.
   }

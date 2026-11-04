@@ -28,6 +28,11 @@ test('current provider protobuf user.displayId becomes the viewer handle', () =>
   assert.equal(event?.uniqueId,'viewer_actual');
   assert.equal(event?.name,'@viewer_actual');
 });
+test('current gift.type streak emits only on repeatEnd', () => {
+  const data={user:{displayId:'viewer'},common:{msgId:'1'},giftId:'5655',gift:{type:1,name:'Rose',diamondCount:1},repeatEnd:0};
+  assert.equal(normalize('gift',data,{'5655':'rose'}),null);
+  assert.equal(normalize('gift',{...data,repeatEnd:1},{'5655':'rose'}).kind,'rose');
+});
 test('provider adapter forwards actual event names, maps gifts and terminal states', async () => {
   let upstream;
   class FakeConnection extends EventEmitter {

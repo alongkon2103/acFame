@@ -11,7 +11,7 @@ export function adapter(gifts, assets, Connection = TikTokLiveConnection) {
       connection.on(eventName, data => {
         const event = normalize(kind, data, gifts, assets);
         if (event) { if (!data.common?.msgId && !data.msgId) metrics.missingIds++; emit(event); }
-        else if (kind === 'gift' && (Number(data.giftType) !== 1 || data.repeatEnd)) metrics.unmappedGifts++;
+        else if (kind === 'gift' && (Number(data.giftType ?? data.giftDetails?.giftType ?? data.gift?.type) !== 1 || data.repeatEnd)) metrics.unmappedGifts++;
       });
     }
     connection.on('error', () => terminal('ERROR'));
