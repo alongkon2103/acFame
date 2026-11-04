@@ -94,7 +94,7 @@ gap=true บอก cursor เก่ากว่า retention แต่ Roblox �
 ตั้ง `TEST_LIKES_PHOTO=true` ใน bridge/.env แล้ว restart Backend และ Connect ใหม่
 สะสม `count`/`likeCount` จาก TikTok แยกตามผู้ชม เมื่อครบ 15 ส่งอีเวนต์รูปแบบ necklace พร้อมชื่อและรูปโปรไฟล์ของคนกดใจ ภาพเป็น 32x32 pixels จาก HTTPS TikTok CDN, จำกัดขนาดไฟล์/เวลา/งานพร้อมกัน; ถ้าโหลดรูปไม่ได้จะนับ avatarFailures และไม่ปลอมรูปมาแทน
 แต่ละอีเวนต์ที่ข้าม 15 สร้างได้หนึ่งรูป เก็บยอดที่เหลือ modulo 15 และนับใหม่เมื่อ reconnect
-ใช้ทดสอบใน Studio ที่ AllowStudioPixels=true; published experience ยังไม่รับ pixels และต้องใช้ AVATAR_ASSETS ที่มี asset จริง ปิดโหมดนี้ด้วย TEST_LIKES_PHOTO=false แล้ว restart/Connect ใหม่
+ใช้ทดสอบใน Studio ที่ AllowStudioPixels=true; published experience ยังไม่รับ pixels และต้องใช้ AVATAR_ASSETS ที่มี asset จริง โหมดนี้พักการส่ง comment เพื่อไม่ให้รูปติดคิวชื่อเก่า ต้อง Connect ใหม่หลังเปลี่ยนโหมด ปิดด้วย TEST_LIKES_PHOTO=false แล้ว restart/Connect ใหม่
 ชื่อป้ายจอยังเป็น CREATOR PORTRAIT / 10 เพราะใช้การแสดงผล necklace เดิม ไม่ได้หมายถึงส่งของขวัญจริง
 
 - Linux VPS Node 22: automated tests 8/8 ผ่าน หลัง deploy commit 53dd06c

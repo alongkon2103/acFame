@@ -50,6 +50,16 @@ test('provider adapter forwards actual event names, maps gifts and terminal stat
   upstream.emit('streamEnd'); upstream.emit('error', Error('secret must not escape'));
   assert.deepEqual(states, ['OFFLINE','ERROR']); connection.close();
 });
+test('photo test mode holds comments so portraits do not wait behind names',async t=>{
+  const old=process.env.TEST_LIKES_PHOTO;process.env.TEST_LIKES_PHOTO='true';
+  t.after(()=>{if(old===undefined)delete process.env.TEST_LIKES_PHOTO;else process.env.TEST_LIKES_PHOTO=old;});
+  let upstream;class Fake extends EventEmitter{constructor(){super();upstream=this;}connect(){}disconnect(){}}
+  const events=[];const c=makeAdapter({}, {viewer:'123'},Fake)('channel',e=>events.push(e),()=>{},{});
+  upstream.emit('chat',{user:{displayId:'viewer'},common:{msgId:'c'}});
+  upstream.emit('like',{user:{displayId:'viewer'},count:15,common:{msgId:'p'}});
+  await new Promise(r=>setImmediate(r));
+  assert.equal(events.length,1);assert.equal(events[0].avatarAssetId,'123');assert.equal(events[0].kind,'necklace');c.close();
+});
 test('connect failure and timeout end in ERROR and clean up', async () => {
   const fail = new Sessions(() => ({connect: async () => {throw Error('provider');},close(){}}));
   fail.connect(token, 'one'); await new Promise(r => setImmediate(r));
