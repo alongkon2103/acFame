@@ -53,3 +53,36 @@ test('overlay read token cannot connect or mutate; current updates require sessi
   const third=await(await fetch(base+'/connect',{method:'POST',headers:{...headers,'X-Fame-Session':'c'.repeat(32)},body:JSON.stringify({username:'different',ownerId:456})})).json();
   assert.notEqual(third.overlayPath,next.overlayPath);
 });
+test('personal overlay links are ready before Connect and never open a TikTok session',async t=>{
+  let dialed=0;
+  const s=new Sessions(()=>{dialed++;return adapter();});
+  const key='secret'.repeat(6),server=createServer({key,sessions:s,overlaySigningKey:readToken});
+  await new Promise(r=>server.listen(0,'127.0.0.1',r));
+  t.after(()=>{s.close();server.closeAllConnections();server.close();});
+  const base=`http://127.0.0.1:${server.address().port}`,headers={'X-Fame-Key':key,'X-Fame-Session':token};
+  const link=async ownerId=>fetch(base+'/overlay/link',{method:'POST',headers,body:JSON.stringify({ownerId})});
+  assert.equal((await link()).status,400);
+  const response=await link(123);assert.equal(response.status,200);
+  const first=await response.json(),second=await(await link(123)).json(),otherOwner=await(await link(456)).json();
+  assert.equal(first.overlayPath,second.overlayPath);assert.notEqual(first.overlayPath,otherOwner.overlayPath);
+  assert.match(first.activityPath,/^\/overlay\/activity\?view=[a-f0-9]{64}$/);
+  await new Promise(r=>setImmediate(r));assert.equal(dialed,0);assert.equal(s.items.size,0);
+  const view=new URL(first.overlayPath,base).searchParams.get('view');
+  const idle=await(await fetch(base+'/overlay/state?view='+view)).json();
+  assert.equal(idle.status,'DISCONNECTED');assert.equal(idle.current,null);assert.equal(idle.counts.rose,0);
+  assert.equal((await fetch(base+first.activityPath)).status,200);
+  const connected=await(await fetch(base+'/connect',{method:'POST',headers,body:JSON.stringify({username:'channel',ownerId:123})})).json();
+  assert.equal(connected.overlayPath,first.overlayPath);
+});
+test('activity counts deduplicate received events and stay scoped to their owner',()=>{
+  const s=new Sessions(adapter);s.connect(token,'channel',viewA);s.connect(other,'channel',viewB);
+  const a=s.items.get(token);
+  s.recordActivity(a,{id:'comment:one',kind:'comment'});
+  s.push(a,{id:'rose:one',kind:'rose'});s.push(a,{id:'rose:one',kind:'rose'});
+  s.push(a,{id:'like-photo:test',kind:'necklace'});
+  s.recordActivity(a,{id:'like:one',kind:'like',count:8});s.recordActivity(a,{id:'like:one',kind:'like',count:8});
+  assert.equal(s.overlayState(viewA).counts.comment,1);assert.equal(s.overlayState(viewA).counts.rose,1);
+  assert.equal(s.overlayState(viewA).counts.necklace,0);assert.equal(s.overlayState(viewB).counts.rose,0);
+  assert.equal(s.overlayState(viewA).counts.like,8);
+  s.disconnect(token);assert.equal(s.overlayState(viewA).counts.rose,0);s.close();
+});

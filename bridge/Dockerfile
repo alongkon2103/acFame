@@ -4,6 +4,7 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 COPY *.mjs ./
 COPY overlay.html ./
+COPY activity.html ./
 USER node
 ENV HOST=0.0.0.0 PORT=3210
 EXPOSE 3210

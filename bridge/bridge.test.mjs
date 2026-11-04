@@ -54,11 +54,12 @@ test('photo test mode holds comments so portraits do not wait behind names',asyn
   const old=process.env.TEST_LIKES_PHOTO;process.env.TEST_LIKES_PHOTO='true';
   t.after(()=>{if(old===undefined)delete process.env.TEST_LIKES_PHOTO;else process.env.TEST_LIKES_PHOTO=old;});
   let upstream;class Fake extends EventEmitter{constructor(){super();upstream=this;}connect(){}disconnect(){}}
-  const events=[];const c=makeAdapter({}, {viewer:'123'},Fake)('channel',e=>events.push(e),()=>{},{});
+  const events=[],activity=[];const c=makeAdapter({}, {viewer:'123'},Fake)('channel',e=>events.push(e),()=>{},{},e=>activity.push(e));
   upstream.emit('chat',{user:{displayId:'viewer'},common:{msgId:'c'}});
   upstream.emit('like',{user:{displayId:'viewer'},count:15,common:{msgId:'p'}});
   await new Promise(r=>setImmediate(r));
-  assert.equal(events.length,1);assert.equal(events[0].avatarAssetId,'123');assert.equal(events[0].kind,'necklace');c.close();
+  assert.equal(events.length,1);assert.equal(events[0].avatarAssetId,'123');assert.equal(events[0].kind,'necklace');
+  assert.deepEqual(activity.map(e=>e.kind),['comment','like']);assert.equal(activity[1].count,15);c.close();
 });
 test('connect failure and timeout end in ERROR and clean up', async () => {
   const fail = new Sessions(() => ({connect: async () => {throw Error('provider');},close(){}}));

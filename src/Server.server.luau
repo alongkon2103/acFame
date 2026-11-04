@@ -20,6 +20,7 @@ local busy=false
 local connectCooldown={}
 local overlayUrl=nil
 local overlayOwnerId=nil
+local overlayRequests={}
 local function canControl(p)
 	if Run:IsStudio() then return true end
 	if #Players:GetPlayers()==1 or connectionOwner==p then return true end
@@ -37,6 +38,22 @@ local function request(path,method,token,body)
 	local res=Http:RequestAsync(options)
 	assert(res.Success,"Bridge HTTP "..res.StatusCode)
 	return Http:JSONDecode(res.Body)
+end
+local function prepareOverlay(p)
+	if not canControl(p) then return end
+	if overlayOwnerId==p.UserId and overlayUrl then control:FireClient(p,"overlay",overlayUrl) return end
+	if overlayRequests[p.UserId] then return end
+	if Config.BridgeUrl=="" or #Config.BridgeKey<20 or (not Run:IsStudio() and not Config.BridgeUrl:match("^https://")) then return end
+	overlayRequests[p.UserId]=true
+	task.spawn(function()
+		local ok,body=pcall(request,"/overlay/link","POST",Http:GenerateGUID(false),{ownerId=p.UserId})
+		overlayRequests[p.UserId]=nil
+		if p.Parent~=Players or not canControl(p) then return end
+		if ok and type(body)=="table" and type(body.overlayPath)=="string" and body.overlayPath:match("^/overlay%?view=%x+$") then
+			overlayUrl=Config.BridgeUrl..body.overlayPath overlayOwnerId=p.UserId
+			control:FireClient(p,"overlay",overlayUrl)
+		else control:FireClient(p,"message","Could not prepare overlay links. Reopen Live setup to retry.") end
+	end)
 end
 local displayRevision=0
 local function updateOverlay(e)
@@ -124,10 +141,10 @@ end)
 control.OnServerEvent:Connect(function(p,action,username)
 	if action=="sync" then
 		control:FireClient(p,"permission",canControl(p))
-		if overlayOwnerId==p.UserId and overlayUrl then control:FireClient(p,"overlay",overlayUrl) end
+		prepareOverlay(p)
 		return
 	end
-	if not canControl(p) then control:FireClient(p,"message","เฉพาะเจ้าของแมพหรือเจ้าของเซิร์ฟเวอร์ส่วนตัวเท่านั้น") return end
+	if not canControl(p) then control:FireClient(p,"message","Only this server's controller can connect.") return end
 	if os.clock()-(connectCooldown[p] or -10)<3 then return end
 	connectCooldown[p]=os.clock()
 	if action=="disconnect" then disconnect() return end
@@ -135,10 +152,10 @@ control.OnServerEvent:Connect(function(p,action,username)
 	if type(username)~="string" then return end
 	username=username:match("^%s*(.-)%s*$"):gsub("^@",""):lower()
 	if #username<1 or #username>24 or not username:match("^[%w_][%w_%.]*$") then
-		control:FireClient(p,"message","กรอกชื่อช่อง TikTok เช่น @yourname ไม่ใช่ลิงก์") return
+		control:FireClient(p,"message","Enter a TikTok handle, such as @yourname, not a URL.") return
 	end
 	if not Config.LiveEnabled or Config.BridgeUrl=="" or #Config.BridgeKey<20 then
-		connectionState("SETUP_REQUIRED") control:FireClient(p,"message","ระบบเชื่อมต่อยังไม่พร้อม กรุณาติดต่อผู้ขาย") return
+		connectionState("SETUP_REQUIRED") control:FireClient(p,"message","Connection setup is missing. Contact the host.") return
 	end
 	if not Run:IsStudio() and not Config.BridgeUrl:match("^https://") then
 		connectionState("SETUP_REQUIRED") return

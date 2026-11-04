@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="th">
+<html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
-<title>AC Fame · คนที่กำลังวาด</title>
+<title>AC Fame · Now Creating</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;background:transparent;overflow:hidden;color:#fff;font-family:Tahoma,"Noto Sans Thai",Arial,sans-serif}
 body{width:100vw;min-height:160px;display:flex;align-items:flex-start;padding:8px}
@@ -16,24 +16,25 @@ body{width:100vw;min-height:160px;display:flex;align-items:flex-start;padding:8p
 @media(max-width:520px){body{padding:6px}.profile{grid-template-columns:80px minmax(0,1fr);gap:14px;padding:16px}.portrait{width:80px;height:80px}.name{font-size:23px}.handle{font-size:12px}.topline{font-size:9px}.brand{letter-spacing:2px}.stats{gap:12px;font-size:10px}.stats>span+span{padding-left:12px}.stats b{font-size:15px}}
 @media(prefers-reduced-motion:reduce){.profile{transition:none}}
 </style>
-<section class="profile" id="profile" hidden aria-label="ผู้ชมที่กำลังเขียนหรือวาด" aria-live="polite">
+<section class="profile" id="profile" hidden aria-label="Creator currently being drawn" aria-live="polite">
   <div class="portrait"><span id="initial" aria-hidden="true">@</span><canvas id="pixels" width="32" height="32" hidden></canvas><img id="avatar" alt="" referrerpolicy="no-referrer" hidden></div>
-  <div class="identity"><div class="topline"><span class="brand">AC FAME</span><span class="activity" id="activity">กำลังสร้างผลงาน</span></div><h1 class="name" id="nickname"></h1><div class="handle" id="handle"></div><div class="stats"><span><b id="following">—</b>กำลังติดตาม</span><span><b id="followers">—</b>ผู้ติดตาม</span></div></div>
+  <div class="identity"><div class="topline"><span class="brand">AC FAME</span><span class="activity" id="activity">STANDBY</span></div><h1 class="name" id="nickname"></h1><div class="handle" id="handle"></div><div class="stats"><span><b id="following">—</b>Following</span><span><b id="followers">—</b>Followers</span></div></div>
 </section>
 <script>
 const params=new URLSearchParams(location.search),profile=document.querySelector('#profile'),avatar=document.querySelector('#avatar'),pixels=document.querySelector('#pixels');
-const count=value=>Number.isSafeInteger(value)&&value>=0?value.toLocaleString('th-TH'):'—';
+const count=value=>Number.isSafeInteger(value)&&value>=0?value.toLocaleString('en-US'):'—';
 let currentID='',lastSuccess=Date.now();
-function paint(current){
-  if(!current){profile.hidden=true;currentID='';return;}
+function paint(current,status='DISCONNECTED'){
+  const idle=!current;
+  if(idle)current={id:'idle:'+status,profile:{nickname:'Your next creator',handle:'',following:null,followers:null}};
   if(current.id===currentID)return;
   currentID=current.id;const p=current.profile;
   document.querySelector('#nickname').textContent=p.nickname||p.handle;
-  document.querySelector('#handle').textContent='@'+p.handle;
+  document.querySelector('#handle').textContent=idle?(status==='LIVE'?'Waiting for the next name or portrait':'Your stream layout is ready'):'@'+p.handle;
   document.querySelector('#following').textContent=count(p.following);
   document.querySelector('#followers').textContent=count(p.followers);
-  document.querySelector('#activity').textContent=['necklace','donut','heart'].includes(current.kind)?'กำลังวาดรูป':'กำลังเขียนชื่อ';
-  document.querySelector('#initial').textContent=Array.from(p.nickname||p.handle||'@')[0];
+  document.querySelector('#activity').textContent=idle?'STANDBY':(['necklace','donut','heart'].includes(current.kind)?'PAINTING':'WRITING');
+  document.querySelector('#initial').textContent=idle?'AC':Array.from(p.nickname||p.handle||'@')[0];
   avatar.hidden=true;avatar.removeAttribute('src');pixels.hidden=true;
   if(current.pixels?.length===1024){
     const ctx=pixels.getContext('2d'),data=ctx.createImageData(32,32);
@@ -43,10 +44,11 @@ function paint(current){
   profile.hidden=false;
 }
 async function poll(){
-  try{const response=await fetch('/overlay/state?'+new URLSearchParams({view:params.get('view')||''}),{cache:'no-store',signal:AbortSignal.timeout(5000)});if(!response.ok)throw Error('Unavailable');paint((await response.json()).current);lastSuccess=Date.now();}
+  try{const response=await fetch('/overlay/state?'+new URLSearchParams({view:params.get('view')||''}),{cache:'no-store',signal:AbortSignal.timeout(5000)});if(!response.ok)throw Error('Unavailable');const state=await response.json();paint(state.current,state.status);lastSuccess=Date.now();}
   catch{if(Date.now()-lastSuccess>8000){profile.hidden=true;currentID='';}}
   setTimeout(poll,500);
 }
-if(params.get('preview')==='1')paint({id:'preview',profile:{nickname:'ตัวอย่าง Overlay',handle:'preview',following:null,followers:null}});else poll();
+paint(null);
+if(params.get('preview')==='1')paint({id:'preview',profile:{nickname:'Overlay preview',handle:'your_channel',following:null,followers:null}});else poll();
 </script>
 </html>

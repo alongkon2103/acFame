@@ -100,11 +100,15 @@ gap=true บอก cursor เก่ากว่า retention แต่ Roblox �
 
 ### Streaming Overlay
 
-แมพใช้ 1 คนต่อเซิร์ฟเวอร์ เมื่อกด Connect เกมส่ง Roblox UserId ฝั่ง Server ไป backend แล้วส่งลิงก์ `/overlay?view=...` กลับให้ผู้เล่นคนนั้นเท่านั้น ในหน้า Connect มีช่องลิงก์กับปุ่มเลือกลิงก์ จากนั้นกด Ctrl+C / Cmd+C เพื่อนำไปวางใน OBS Browser Source หรือแหล่งเว็บใน TikTok LIVE Studio ขนาด 640 x 176
+แมพใช้ 1 คนต่อเซิร์ฟเวอร์ เมื่อเข้าเกม FameServer ขอ POST /overlay/link ด้วย Roblox UserId แล้วส่งลิงก์กลับให้ผู้เล่นคนนั้นเท่านั้น ไม่ต้องกรอกชื่อช่องหรือกด Connect และยังไม่เปิด TikTok socket จัด Browser Sources ก่อน LIVE ได้เลย ในหน้า Live setup มีสองลิงก์ กด Select แล้ว Ctrl+C / Cmd+C เพื่อนำไปวางใน OBS หรือ TikTok LIVE Studio
+- Now Creating: `/overlay?view=...` ขนาด 640 × 176 แสดงคนที่กำลังวาด และแสดงกรอบ Standby ขณะยังไม่มีงานเพื่อใช้จัดจอ
+- Activity Guide: `/overlay/activity?view=...` ขนาด 320 × 640 รายการคอมเมนต์/ติดตาม/Rose/Necklace/Donut/Heart พร้อมตัวนับอีเวนต์แยกผู้เล่น เริ่มที่ 0 ไม่ใช่จำนวนเหรียญที่ต้องจ่าย ตัวนับเริ่มใหม่ทุก Connect และล้างเมื่อ disconnect
+- ถ้า TEST_LIKES_PHOTO=true Guide แสดงแถว 15-like photo เพิ่ม และนับ like เป็นจำนวนครั้งที่แตะใจจริง คอมเมนต์ยังนับกิจกรรมแม้พักการวาดชื่อในโหมดนี้ รูปจาก likes ไม่ถูกนับเป็นของขวัญ Necklace
+- Base UI ทั้งเกมและทั้งสอง Browser Sources ใช้ภาษาอังกฤษ; ชื่อผู้ชมเป็นข้อความต้นฉบับจาก TikTok
 ลิงก์ผูกกับผู้เล่นด้วย HMAC ไม่ใส่ UserId, FAME_KEY หรือ session token ลงใน URL; คนเดิมเข้าใหม่/เปลี่ยนช่องได้ลิงก์เดิม และ backend ปิด session เก่าของเจ้าของเดียวกัน สองคนใช้ TikTok ช่องเดียวกันไม่ปะปนกัน
 ตั้ง OVERLAY_SIGNING_KEY แบบสุ่มและเก็บเป็น secret ใน bridge/.env (ถ้าไม่ตั้งจะใช้ FAME_KEY เป็น signing key) เปลี่ยน signing key แล้วลิงก์เดิมจะเปลี่ยน OVERLAY_TOKEN แบบรวมและลิงก์ channel/token รุ่นเก่าเลิกใช้แล้ว
 FameServer แจ้ง POST /overlay/current เมื่อเริ่ม display/champion จริง Overlay จึงแสดงคนที่กำลังวาด ไม่ใช่คนล่าสุดที่กดไลก์เข้า backend (มีระยะ polling ประมาณ 0.5 วินาที)
-แสดง nickname, @handle, avatar, following/follower counts ที่ TikTok ส่งมา ถ้าไม่มีจำนวนแสดง — ไม่เดาค่า; ไม่มีงาน/ตัดการเชื่อมต่อจะซ่อน Overlay
+แสดง nickname, @handle, avatar, following/follower counts ที่ TikTok ส่งมา ถ้าไม่มีจำนวนแสดง — ไม่เดาค่า; ไม่มีงาน/ตัดการเชื่อมต่อจะแสดงกรอบ Standby โดยไม่ใส่ข้อมูลผู้ชมปลอม
 ใช้ `?preview=1` แทน query อื่นเพื่อดูดีไซน์ตัวอย่าง ไม่มีข้อมูลผู้ชมจริง ผู้ถือ view link อ่านได้เฉพาะ Overlay ของเจ้าของนั้น ไม่สามารถสั่ง Connect หรืออ่านคิวคนอื่น การ restart backend จะล้าง session; Connect ใหม่แล้วลิงก์เดิมกลับมาใช้ได้
 หลังเปลี่ยน FameServer ใน Studio ต้อง Save/Publish ให้เกมจริงใช้สคริปต์ใหม่; ห้ามนำ src/Config.luau key ว่างไปทับ config ที่ตั้งไว้
 

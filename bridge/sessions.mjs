@@ -1,3 +1,5 @@
+const activityKinds=['comment','follow','rose','necklace','donut','heart','like'];
+const emptyCounts=()=>Object.fromEntries(activityKinds.map(kind=>[kind,0]));
 export class Sessions {
   constructor(adapter, { now = Date.now, ttl = 90000, timeout = 20000, capacity = 100 } = {}) {
     this.adapter = adapter; this.now = now; this.ttl = ttl; this.timeout = timeout; this.capacity = capacity;
@@ -13,7 +15,7 @@ export class Sessions {
     if(previous) this.disconnect(previous[0]);
     this.disconnect(token);
     this.recent.set(token, this.now());
-    const s = { username: name, overlayId, status: 'CONNECTING', touched: this.now(), cursor: 0, events: [], seen: new Set(), closed: false };
+    const s = { username: name, overlayId, status: 'CONNECTING', touched: this.now(), cursor: 0, events: [], seen: new Set(), activitySeen:new Set(), counts:emptyCounts(), closed: false };
     this.items.set(token, s);
     const terminal = status => {
       if (s.closed) return;
@@ -26,7 +28,7 @@ export class Sessions {
     s.timer = setTimeout(() => terminal('ERROR'), this.timeout); s.timer.unref?.();
     Promise.resolve().then(async () => {
       if (s.closed) return;
-      const connection = this.adapter(name, event => this.push(s, event), terminal, this.metrics);
+      const connection = this.adapter(name, event => this.push(s, event), terminal, this.metrics, event=>this.recordActivity(s,event));
       s.connection = connection;
       await connection.connect();
       if (s.closed) { connection.close(); return; }
@@ -38,6 +40,7 @@ export class Sessions {
     if (s.closed || !event) return;
     if (s.seen.has(event.id)) { this.metrics.duplicates++; return; }
     s.seen.add(event.id);
+    this.recordActivity(s,event);
     if (s.seen.size > 4000) s.seen.delete(s.seen.values().next().value);
     s.events.push({ ...event, seq: ++s.cursor });
     if (s.events.length > 500) { s.events.shift(); this.metrics.dropped++; }
@@ -66,10 +69,20 @@ export class Sessions {
     return true;
   }
   overlay(view) {
+    return this.overlayState(view).current;
+  }
+  recordActivity(s,event) {
+    if(s.closed || !event || typeof event.id!=='string' || event.id.startsWith('like-photo:') || !activityKinds.includes(event.kind) || s.activitySeen.has(event.id)) return;
+    const amount=event.kind==='like' ? Number(event.count) : 1;
+    if(!Number.isSafeInteger(amount) || amount<1 || amount>10000) return;
+    s.activitySeen.add(event.id);
+    if(s.activitySeen.size>4000) s.activitySeen.delete(s.activitySeen.values().next().value);
+    s.counts[event.kind]+=amount;
+  }
+  overlayState(view) {
     this.sweep();
-    if(!view) return null;
-    for(const s of this.items.values()) if(!s.closed && s.overlayId===view) return s.currentOverlay||null;
-    return null;
+    if(view) for(const s of this.items.values()) if(!s.closed && s.overlayId===view) return {current:s.currentOverlay||null,status:s.status,counts:s.counts};
+    return {current:null,status:'DISCONNECTED',counts:emptyCounts()};
   }
   sweep() {
     for (const [token, s] of this.items) if (this.now() - s.touched >= this.ttl) this.disconnect(token);

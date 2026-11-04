@@ -14,11 +14,11 @@ end
 local function connect()
 	if folder:GetAttribute("BridgeStatus")=="CONNECTING" then return end
 	if ui.channelInput.Text:match("^%s*$") then
-		ui.connectionMessage.Text="กรอกชื่อช่อง TikTok ก่อนเชื่อมต่อ"
+		ui.connectionMessage.Text="Enter your TikTok handle first."
 		ui.channelInput:CaptureFocus()
 		return
 	end
-	ui.connectionMessage.Text="กำลังส่งคำขอ…"
+	ui.connectionMessage.Text="Sending request…"
 	control:FireServer("connect",ui.channelInput.Text)
 end
 ui.connectButton.Activated:Connect(connect)
@@ -32,6 +32,7 @@ end)
 folder:GetAttributeChangedSignal("BridgeStatus"):Connect(updateConnection)
 folder:GetAttributeChangedSignal("Channel"):Connect(updateConnection)
 updateConnection() control:FireServer("sync")
+ui.connectionToggle.Activated:Connect(function() control:FireServer("sync") end)
 for kind,b in pairs(ui.demoButtons) do
 	b.Activated:Connect(function() folder.Demo:FireServer(kind) end)
 end
@@ -80,31 +81,61 @@ restoreCamera()
 camera:GetPropertyChangedSignal("ViewportSize"):Connect(function() if viewLocked and not cinematicPanels then restoreCamera() end end)
 player.CharacterAdded:Connect(function() task.wait(.5) restoreCamera() end)
 local displayVersion=0
+local activeCard=nil
+local history={}
+local pendingDisplays={}
+local archiving=false
 local function idleBoards()
 	root:ClearAllChildren() championRoot:ClearAllChildren()
-	label(root,"ฝากชื่อไว้บนกำแพง",UDim2.fromScale(.12,.38),UDim2.fromScale(.76,.18),Color3.fromRGB(224,211,244))
-	label(root,"เขียนชื่อ · วาดภาพ · เก็บความทรงจำ",UDim2.fromScale(.2,.61),UDim2.fromScale(.6,.055),Color3.fromRGB(151,133,179))
+	label(root,"Your name belongs here.",UDim2.fromScale(.12,.38),UDim2.fromScale(.76,.18),Color3.fromRGB(224,211,244))
+	label(root,"Names. Portraits. Memories.",UDim2.fromScale(.2,.61),UDim2.fromScale(.6,.055),Color3.fromRGB(151,133,179))
 	label(championRoot,"HALL OF FAME",UDim2.fromScale(.16,.4),UDim2.fromScale(.68,.12),gold)
 end
-local function show(e)
+local function startWriting(e)
 	ui:setCurrent(e)
 	displayVersion+=1 local version=displayVersion
-	root:ClearAllChildren()
+	if #history==0 then root:ClearAllChildren() end
+	activeCard=make("Frame",root,{Name="ActiveWriting",BackgroundTransparency=1,Size=UDim2.fromOffset(1400,600)})
+	local card=activeCard
+	make("UIScale",card,{Scale=1})
 	portraitPainting=nil
 	local isPhoto=e.kind=="necklace" or e.kind=="donut"
 	local isBig=e.kind=="donut"
 	local color=isBig and pink or cyan
-	local heading=e.id:sub(1,11)=="like-photo:" and "LIKE PORTRAIT  /  15" or (isBig and "FEATURED PORTRAIT" or (isPhoto and "CREATOR PORTRAIT" or "THE NAME WALL"))
-	label(root,heading,UDim2.fromScale(.1,.06),UDim2.fromScale(.8,.055),color)
 	if isPhoto then
-		portraitPainting=PhotoPainter.new(root,e,{x=isBig and .38 or .41,y=.15,w=isBig and .24 or .18,h=isBig and .56 or .42},6)
+		portraitPainting=PhotoPainter.new(card,e,{x=isBig and .40 or .42,y=.32,w=isBig and .20 or .16,h=isBig and .4667 or .3733},6)
 		if isBig then make("UIStroke",portraitPainting.holder,{Thickness=7,Color=pink}) end
 	end
-	writing=BrushWriter.new(root,e.name,{x=.07,y=isPhoto and .72 or .37,w=.86,h=isPhoto and .14 or .27},Color3.fromRGB(243,230,255),5.5)
-	local line=make("Frame",root,{BackgroundColor3=color,BorderSizePixel=0,Position=UDim2.fromScale(.12,isPhoto and .89 or .66),Size=UDim2.fromScale(0,.008)})
+	writing=BrushWriter.new(card,e.name,{x=.07,y=isPhoto and .80 or .46,w=.86,h=isPhoto and .12 or .24},Color3.fromRGB(243,230,255),5.5)
+	local line=make("Frame",card,{BackgroundColor3=color,BorderSizePixel=0,Position=UDim2.fromScale(.12,isPhoto and .94 or .74),Size=UDim2.fromScale(0,.008)})
 	Tween:Create(line,TweenInfo.new(.7,Enum.EasingStyle.Sine,Enum.EasingDirection.Out,0,false,isPhoto and 11.5 or 5.5),{Size=UDim2.fromScale(.76,.008)}):Play()
-	if e.kind=="follow" then label(root,"ติดตาม",UDim2.fromScale(.2,.72),UDim2.fromScale(.6,.12),Color3.fromRGB(15,146,143)) end
-	if e.kind=="rose" then label(root,"ขอบคุณสำหรับกุหลาบ",UDim2.fromScale(.2,.75),UDim2.fromScale(.6,.08),pink) end
+	if e.kind=="follow" then label(card,"Following",UDim2.fromScale(.2,.79),UDim2.fromScale(.6,.12),Color3.fromRGB(15,146,143)) end
+	if e.kind=="rose" then label(card,"Thanks for the Rose!",UDim2.fromScale(.2,.82),UDim2.fromScale(.6,.08),pink) end
+end
+
+local function archiveWriting()
+	if not activeCard or archiving then return end
+	archiving=true
+	local version=displayVersion
+	local card=activeCard
+	card.Name="CompletedWriting"
+	table.insert(history,1,card)
+	if #history>3 then table.remove(history):Destroy() end
+	for i,item in ipairs(history) do
+		Tween:Create(item,TweenInfo.new(.65,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position=UDim2.fromScale(.04+(i-1)*.32,.015)}):Play()
+		Tween:Create(item.UIScale,TweenInfo.new(.65,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Scale=.28}):Play()
+	end
+	writing=nil portraitPainting=nil
+	task.delay(.65,function()
+		if version~=displayVersion then return end
+		activeCard=nil archiving=false
+		if #pendingDisplays>0 then startWriting(table.remove(pendingDisplays,1)) end
+	end)
+end
+local function show(e)
+	if activeCard or archiving then
+		if #pendingDisplays<150 then table.insert(pendingDisplays,e) end
+	else startWriting(e) end
 end
 local wingRest={}
 local wings={}
@@ -124,7 +155,7 @@ local function showChampion(e,quiet)
 		end
 	end
 	label(championRoot,e.name,UDim2.fromScale(.08,.77),UDim2.fromScale(.84,.11),white)
-	label(championRoot,"อุ้มใจ 100 • อยู่จนกว่าจะมีผู้ส่งอุ้มใจคนถัดไป",UDim2.fromScale(.1,.9),UDim2.fromScale(.8,.07),gold)
+	label(championRoot,"Heart 100 · Replaced by the next Top Supporter",UDim2.fromScale(.1,.9),UDim2.fromScale(.8,.07),gold)
 	if quiet then return end
 	cinematicPanels=true
 	ui:setCinematic(true)
@@ -145,8 +176,9 @@ local function showChampion(e,quiet)
 end
 folder.Display.OnClientEvent:Connect(function(kind,e,quiet)
 	if kind=="reset" then
-		ui.hint.Text="ฝากชื่อไว้บนกำแพงแห่งนี้"
+		ui.hint.Text="Leave your name on the wall."
 		displayVersion+=1 cameraVersion+=1 wings={} writing=nil portraitPainting=nil championPainting=nil
+		activeCard=nil archiving=false history={} pendingDisplays={}
 		idleBoards()
 		restoreCamera()
 	elseif kind=="champion" then showChampion(e,quiet) else show(e) end
@@ -161,6 +193,7 @@ Run.RenderStepped:Connect(function(dt)
 	if championPainting and not championPainting.done then championPainting:step(dt) end
 	if portraitPainting and not portraitPainting.done then uv=portraitPainting:step(dt)
 	elseif writing and not writing.done then uv,lift=writing:step(dt) end
+	if writing and writing.done and (not portraitPainting or portraitPainting.done) then archiveWriting() uv=nil lift=nil end
 	painter:step(dt,uv,lift)
 end)
 idleBoards()
