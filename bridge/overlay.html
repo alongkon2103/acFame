@@ -6,19 +6,24 @@
 <title>AC Fame · Now Creating</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;background:transparent;overflow:hidden;color:#fff;font-family:Tahoma,"Noto Sans Thai",Arial,sans-serif}
-body{width:100vw;min-height:160px;display:flex;align-items:flex-start;padding:8px}
-.profile{position:relative;width:min(100%,624px);display:grid;grid-template-columns:100px minmax(0,1fr);align-items:center;gap:20px;padding:18px 22px;background:linear-gradient(115deg,rgba(17,12,36,.96),rgba(27,12,48,.91));border:1px solid #ae5bff80;border-radius:8px;box-shadow:inset 0 1px 0 #e0c6ff15,0 0 14px #921cff20;transition:opacity .2s}
-.profile:after{content:"";position:absolute;bottom:-1px;left:22px;right:22px;height:2px;background:linear-gradient(90deg,#28e5d6,#9e4aff 55%,#f342dc);box-shadow:0 0 8px #b63cff99}
-.profile[hidden]{display:none}.identity{min-width:0}.topline{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;font-size:10px;line-height:1.4;font-weight:700}.brand{color:#c897ff;letter-spacing:3px}.activity{color:#47e7da;white-space:nowrap;display:flex;align-items:center;gap:6px}.activity:before{content:"";width:5px;height:5px;border-radius:50%;background:#47e7da;box-shadow:0 0 6px #47e7da}
-.name{min-width:0;margin:0 0 3px;font-size:28px;font-weight:800;line-height:1.25;letter-spacing:-.4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.handle{font-size:14px;color:#b7a7d1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.stats{display:flex;gap:22px;align-items:baseline;margin-top:12px;white-space:nowrap;font-size:11px;color:#a99bbd}.stats>span+span{border-left:1px solid #ffffff1a;padding-left:22px}.stats b{font-size:17px;font-weight:700;margin-right:6px;color:#ede6fa;font-variant-numeric:tabular-nums}
-.portrait{width:100px;height:100px;border:2px solid #3ce8d0;border-radius:6px;box-shadow:0 0 12px #38dccc20;overflow:hidden;position:relative;background:#211337;color:#ceaeff;display:grid;place-items:center;font-size:44px;font-weight:700}.portrait img,.portrait canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.portrait canvas{image-rendering:auto}.portrait [hidden]{display:none}
-@media(max-width:520px){body{padding:6px}.profile{grid-template-columns:80px minmax(0,1fr);gap:14px;padding:16px}.portrait{width:80px;height:80px}.name{font-size:23px}.handle{font-size:12px}.topline{font-size:9px}.brand{letter-spacing:2px}.stats{gap:12px;font-size:10px}.stats>span+span{padding-left:12px}.stats b{font-size:15px}}
+body{width:100vw;display:flex;align-items:flex-start;padding:8px}
+.profile{position:relative;width:min(100%,624px);display:grid;grid-template-columns:104px minmax(0,1fr);align-items:center;gap:20px;padding:14px 26px 14px 14px;background:linear-gradient(105deg,rgba(52,32,52,.94),rgba(15,14,23,.96) 53%);border:1px solid #e9d4ff24;border-radius:80px;box-shadow:inset 0 1px 0 #ffffff0a;transition:opacity .2s}
+.profile[hidden]{display:none}.identity{min-width:0}
+.name{min-width:0;margin:0 0 7px;font-size:28px;font-weight:800;line-height:1.2;letter-spacing:-.4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;text-shadow:0 2px 4px #0005}
+.account{display:flex;align-items:center;gap:8px;min-width:0}.tiktok{width:20px;height:20px;flex:none;fill:#f5efff}.handle{min-width:0;font-size:15px;color:#c1b6cb;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stats{display:flex;gap:14px;align-items:center;margin-top:11px;white-space:nowrap;font-size:10px;color:#9f93ac}.stats b{font-size:14px;font-weight:700;margin-right:4px;color:#eae2f2;font-variant-numeric:tabular-nums}.activity{margin-left:auto;font-size:10px;font-weight:800;letter-spacing:1.1px;color:#5de2d1}.activity:before{content:"";display:inline-block;width:5px;height:5px;margin:0 6px 1px 0;border-radius:50%;background:currentColor}
+.portrait{width:104px;height:104px;border:2px solid #d4b4f078;border-radius:50%;overflow:hidden;position:relative;background:#241c31;color:#d1b9e7;display:grid;place-items:center;font-size:38px;font-weight:700}.portrait img,.portrait canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.portrait canvas{image-rendering:auto}.portrait [hidden]{display:none}
+@media(max-width:520px){.profile{grid-template-columns:80px minmax(0,1fr);gap:14px;padding:12px 20px 12px 12px}.portrait{width:80px;height:80px}.name{font-size:23px;margin-bottom:5px}.handle{font-size:13px}.tiktok{width:17px;height:17px}.stats{gap:10px;margin-top:9px;font-size:9px}.stats b{font-size:12px}.activity{font-size:8px;letter-spacing:.5px}}
+@media(max-width:380px){.profile{grid-template-columns:64px minmax(0,1fr);gap:11px;padding:10px 17px 10px 10px}.portrait{width:64px;height:64px;font-size:26px}.name{font-size:19px}.handle{font-size:11px}.stats{flex-wrap:wrap;gap:5px 10px;margin-top:7px}.activity{margin-left:0}.stats b{font-size:11px}.account{gap:5px}.tiktok{width:14px;height:14px}}
 @media(prefers-reduced-motion:reduce){.profile{transition:none}}
 </style>
 <section class="profile" id="profile" hidden aria-label="Creator currently being drawn" aria-live="polite">
   <div class="portrait"><span id="initial" aria-hidden="true">@</span><canvas id="pixels" width="32" height="32" hidden></canvas><img id="avatar" alt="" referrerpolicy="no-referrer" hidden></div>
-  <div class="identity"><div class="topline"><span class="brand">AC FAME</span><span class="activity" id="activity">STANDBY</span></div><h1 class="name" id="nickname"></h1><div class="handle" id="handle"></div><div class="stats"><span><b id="following">—</b>Following</span><span><b id="followers">—</b>Followers</span></div></div>
+  <div class="identity">
+    <h1 class="name" id="nickname"></h1>
+    <div class="account"><svg class="tiktok" viewBox="0 0 24 24" aria-hidden="true"><path d="M16.6 1h-4.1v14.1a3 3 0 1 1-2.6-3V8a7.1 7.1 0 1 0 6.7 7.1V8a10 10 0 0 0 5.4 1.6V5.5A5.4 5.4 0 0 1 16.6 1Z"/></svg><span class="handle" id="handle"></span></div>
+    <div class="stats"><span><b id="following">—</b>Following</span><span><b id="followers">—</b>Followers</span><span class="activity" id="activity">STANDBY</span></div>
+  </div>
 </section>
 <script>
 const params=new URLSearchParams(location.search),profile=document.querySelector('#profile'),avatar=document.querySelector('#avatar'),pixels=document.querySelector('#pixels');
