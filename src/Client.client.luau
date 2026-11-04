@@ -49,7 +49,7 @@ local overlayPanel=make("Frame",connectPanel,{Name="OverlayPanel",Position=UDim2
 make("UICorner",overlayPanel,{CornerRadius=UDim.new(0,12)})
 make("UIStroke",overlayPanel,{Thickness=1,Color=Color3.fromRGB(149,75,220)})
 label(overlayPanel,"OVERLAY ของคุณ · 640 × 176",UDim2.new(0,12,0,8),UDim2.new(1,-24,0,22),cyan)
-local overlayLink=make("TextBox",overlayPanel,{Name="OverlayLink",Position=UDim2.new(0,12,0,36),Size=UDim2.new(1,-24,0,32),BackgroundColor3=Color3.fromRGB(31,24,49),Text="",TextColor3=white,Font=Enum.Font.Gotham,TextSize=12,TextXAlignment=Enum.TextXAlignment.Left,ClearTextOnFocus=false,TextEditable=false})
+local overlayLink=make("TextBox",overlayPanel,{Name="OverlayLink",Position=UDim2.new(0,12,0,36),Size=UDim2.new(1,-24,0,32),BackgroundColor3=Color3.fromRGB(31,24,49),Text="",TextColor3=white,Font=Enum.Font.Gotham,TextSize=12,TextXAlignment=Enum.TextXAlignment.Left,TextTruncate=Enum.TextTruncate.AtEnd,ClipsDescendants=true,ClearTextOnFocus=false,TextEditable=false})
 make("UICorner",overlayLink,{CornerRadius=UDim.new(0,6)})
 local selectOverlay=make("TextButton",overlayPanel,{Name="SelectOverlayLink",Position=UDim2.new(0,12,0,76),Size=UDim2.new(1,-24,0,28),BackgroundColor3=Color3.fromRGB(100,49,165),Text="เลือกลิงก์เพื่อคัดลอก",TextColor3=white,Font=Enum.Font.GothamBold,TextSize=14})
 make("UICorner",selectOverlay,{CornerRadius=UDim.new(0,6)})
