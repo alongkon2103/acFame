@@ -5,7 +5,7 @@ return {
 	BridgeKey = "",
 	WhitelistUrl = "https://aclassstore.com/api/whitelist/check",
 	WhitelistKey = "",
-	WhitelistProductId = "",
+	WhitelistProductId = "b584c4e7-dc13-4212-92b4-7c350e65f339",
 	-- Only the place owner, private server owner, or these users can connect.
 	AllowedUserIds = {},
 	PollSeconds = 1,
