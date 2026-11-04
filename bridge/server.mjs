@@ -5,23 +5,27 @@ import { readFileSync } from 'node:fs';
 import { Sessions } from './sessions.mjs';
 import { username, mapping } from './normalize.mjs';
 
-export function createServer({ key, sessions, overlaySigningKey, photoTest = false }) {
+export function createServer({ key, sessions, overlaySigningKey }) {
   if (typeof key !== 'string' || key.length < 20) throw Error('FAME_KEY must contain at least 20 characters');
   const secret = Buffer.from(key);
   const overlayHTML=readFileSync(new URL('./overlay.html',import.meta.url));
   const activityHTML=readFileSync(new URL('./activity.html',import.meta.url));
+  const giftImages=new Map(['rose','necklace','donut','heart'].map(name=>['/overlay/assets/'+name+'.webp',readFileSync(new URL('./assets/gifts/'+name+'.webp',import.meta.url))]));
   const server = http.createServer(async (req, res) => {
     const send = (status, value) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(value)); };
     try {
       const url = new URL(req.url, 'http://localhost');
       if (url.pathname === '/health' && req.method === 'GET') return send(200, { status: 'ok' });
+      if(req.method==='GET' && giftImages.has(url.pathname)) {
+        res.writeHead(200,{'Content-Type':'image/webp','Cache-Control':'public, max-age=86400','X-Content-Type-Options':'nosniff'});res.end(giftImages.get(url.pathname));return;
+      }
       if(['/overlay','/overlay/activity'].includes(url.pathname) && req.method==='GET') {
         res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Referrer-Policy':'no-referrer','X-Content-Type-Options':'nosniff'});res.end(url.pathname==='/overlay' ? overlayHTML : activityHTML);return;
       }
       if(url.pathname==='/overlay/state' && req.method==='GET') {
         const view=url.searchParams.get('view');
         if(!view || !/^[a-f0-9]{64}$/.test(view)) return send(401,{error:'Unauthorized'});
-        return send(200,{...sessions.overlayState(view),photoTest});
+        return send(200,sessions.overlayState(view));
       }
       const supplied = Buffer.from(req.headers['x-fame-key'] || '');
       if (supplied.length !== secret.length || !timingSafeEqual(secret, supplied)) return send(401, { error: 'Unauthorized' });
@@ -63,7 +67,7 @@ export function createServer({ key, sessions, overlaySigningKey, photoTest = fal
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const { adapter } = await import('./adapter.mjs');
   const sessions = new Sessions(adapter(mapping(process.env.GIFT_IDS), mapping(process.env.AVATAR_ASSETS, true)));
-  const server = createServer({ key: process.env.FAME_KEY, sessions, overlaySigningKey:process.env.OVERLAY_SIGNING_KEY, photoTest:process.env.TEST_LIKES_PHOTO==='true' });
+  const server = createServer({ key: process.env.FAME_KEY, sessions, overlaySigningKey:process.env.OVERLAY_SIGNING_KEY });
   const sweep = setInterval(() => sessions.sweep(), 30000); sweep.unref();
   server.listen(Number(process.env.PORT || 3210), process.env.HOST || '127.0.0.1', () => console.log('AC Fame bridge listening'));
   for (const signal of ['SIGINT','SIGTERM']) process.once(signal, () => {

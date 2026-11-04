@@ -112,7 +112,8 @@ FameServer ตรวจสิทธิ์ก่อนรับคำสั่ง
 แมพใช้ 1 คนต่อเซิร์ฟเวอร์ เมื่อเข้าเกม FameServer ขอ POST /overlay/link ด้วย Roblox UserId แล้วส่งลิงก์กลับให้ผู้เล่นคนนั้นเท่านั้น ไม่ต้องกรอกชื่อช่องหรือกด Connect และยังไม่เปิด TikTok socket จัด Browser Sources ก่อน LIVE ได้เลย ในหน้า Live setup มีสองลิงก์ กด Select แล้ว Ctrl+C / Cmd+C เพื่อนำไปวางใน OBS หรือ TikTok LIVE Studio
 - Now Creating: `/overlay?view=...` ขนาด 640 × 176 แสดงคนที่กำลังวาด และแสดงกรอบ Standby ขณะยังไม่มีงานเพื่อใช้จัดจอ
 - Activity Guide: `/overlay/activity?view=...` ขนาด 320 × 640 รายการคอมเมนต์/ติดตาม/Rose/Necklace/Donut/Heart พร้อมตัวนับอีเวนต์แยกผู้เล่น เริ่มที่ 0 ไม่ใช่จำนวนเหรียญที่ต้องจ่าย ตัวนับเริ่มใหม่ทุก Connect และล้างเมื่อ disconnect
-- ถ้า TEST_LIKES_PHOTO=true Guide แสดงแถว 15-like photo เพิ่ม และนับ like เป็นจำนวนครั้งที่แตะใจจริง คอมเมนต์ยังนับกิจกรรมแม้พักการวาดชื่อในโหมดนี้ รูปจาก likes ไม่ถูกนับเป็นของขวัญ Necklace
+- ใช้รูปของขวัญจริงจากแคตตาล็อก TikTok ผ่าน BeetGames เก็บไว้ใน bridge/assets/gifts เพื่อเสิร์ฟจาก Backend เดียวกัน; ที่มาอยู่ใน README ของโฟลเดอร์นั้น
+- ยกเลิกอีเวนต์ทดสอบครบ 15 likes แล้ว: กดใจไม่สร้างรูป และคอมเมนต์กลับมาวาดชื่อตามปกติ
 - Base UI ทั้งเกมและทั้งสอง Browser Sources ใช้ภาษาอังกฤษ; ชื่อผู้ชมเป็นข้อความต้นฉบับจาก TikTok
 ลิงก์ผูกกับผู้เล่นด้วย HMAC ไม่ใส่ UserId, FAME_KEY หรือ session token ลงใน URL; คนเดิมเข้าใหม่/เปลี่ยนช่องได้ลิงก์เดิม และ backend ปิด session เก่าของเจ้าของเดียวกัน สองคนใช้ TikTok ช่องเดียวกันไม่ปะปนกัน
 ตั้ง OVERLAY_SIGNING_KEY แบบสุ่มและเก็บเป็น secret ใน bridge/.env (ถ้าไม่ตั้งจะใช้ FAME_KEY เป็น signing key) เปลี่ยน signing key แล้วลิงก์เดิมจะเปลี่ยน OVERLAY_TOKEN แบบรวมและลิงก์ channel/token รุ่นเก่าเลิกใช้แล้ว
@@ -120,14 +121,6 @@ FameServer แจ้ง POST /overlay/current เมื่อเริ่ม dis
 แสดง nickname, @handle, avatar, following/follower counts ที่ TikTok ส่งมา ถ้าไม่มีจำนวนแสดง — ไม่เดาค่า; ไม่มีงาน/ตัดการเชื่อมต่อจะแสดงกรอบ Standby โดยไม่ใส่ข้อมูลผู้ชมปลอม
 ใช้ `?preview=1` แทน query อื่นเพื่อดูดีไซน์ตัวอย่าง ไม่มีข้อมูลผู้ชมจริง ผู้ถือ view link อ่านได้เฉพาะ Overlay ของเจ้าของนั้น ไม่สามารถสั่ง Connect หรืออ่านคิวคนอื่น การ restart backend จะล้าง session; Connect ใหม่แล้วลิงก์เดิมกลับมาใช้ได้
 หลังเปลี่ยน FameServer ใน Studio ต้อง Save/Publish ให้เกมจริงใช้สคริปต์ใหม่; ห้ามนำ src/Config.luau key ว่างไปทับ config ที่ตั้งไว้
-
-### โหมดทดสอบใจ 15 ครั้ง -> รูป
-
-ตั้ง `TEST_LIKES_PHOTO=true` ใน bridge/.env แล้ว restart Backend และ Connect ใหม่
-สะสม `count`/`likeCount` จาก TikTok แยกตามผู้ชม เมื่อครบ 15 ส่งอีเวนต์รูปแบบ necklace พร้อมชื่อและรูปโปรไฟล์ของคนกดใจ ภาพเป็น 32x32 pixels จาก HTTPS TikTok CDN, จำกัดขนาดไฟล์/เวลา/งานพร้อมกัน; ถ้าโหลดรูปไม่ได้จะนับ avatarFailures และไม่ปลอมรูปมาแทน
-แต่ละอีเวนต์ที่ข้าม 15 สร้างได้หนึ่งรูป เก็บยอดที่เหลือ modulo 15 และนับใหม่เมื่อ reconnect
-ใช้ทดสอบใน Studio ที่ AllowStudioPixels=true; published experience ยังไม่รับ pixels และต้องใช้ AVATAR_ASSETS ที่มี asset จริง โหมดนี้พักการส่ง comment เพื่อไม่ให้รูปติดคิวชื่อเก่า ต้อง Connect ใหม่หลังเปลี่ยนโหมด ปิดด้วย TEST_LIKES_PHOTO=false แล้ว restart/Connect ใหม่
-ชื่อป้ายจอยังเป็น CREATOR PORTRAIT / 10 เพราะใช้การแสดงผล necklace เดิม ไม่ได้หมายถึงส่งของขวัญจริง
 
 - Linux VPS Node 22: automated tests 8/8 ผ่าน หลัง deploy commit 53dd06c
 - Studio กด Connect จริงไป @huntsos: CONNECTING -> LIVE และรับ comment ผ่าน VPS/HTTPS/poll/RemoteEvent ถึง client; จอ Canvas สร้างองค์ประกอบวาดชื่อได้

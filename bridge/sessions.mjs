@@ -1,4 +1,4 @@
-const activityKinds=['comment','follow','rose','necklace','donut','heart','like'];
+const activityKinds=['comment','follow','rose','necklace','donut','heart'];
 const emptyCounts=()=>Object.fromEntries(activityKinds.map(kind=>[kind,0]));
 export class Sessions {
   constructor(adapter, { now = Date.now, ttl = 90000, timeout = 20000, capacity = 100 } = {}) {
@@ -72,12 +72,10 @@ export class Sessions {
     return this.overlayState(view).current;
   }
   recordActivity(s,event) {
-    if(s.closed || !event || typeof event.id!=='string' || event.id.startsWith('like-photo:') || !activityKinds.includes(event.kind) || s.activitySeen.has(event.id)) return;
-    const amount=event.kind==='like' ? Number(event.count) : 1;
-    if(!Number.isSafeInteger(amount) || amount<1 || amount>10000) return;
+    if(s.closed || !event || typeof event.id!=='string' || !activityKinds.includes(event.kind) || s.activitySeen.has(event.id)) return;
     s.activitySeen.add(event.id);
     if(s.activitySeen.size>4000) s.activitySeen.delete(s.activitySeen.values().next().value);
-    s.counts[event.kind]+=amount;
+    s.counts[event.kind]+=1;
   }
   overlayState(view) {
     this.sweep();

@@ -9,7 +9,7 @@
 .card{width:304px;max-width:100%;padding:18px 14px 14px;background:linear-gradient(150deg,rgba(25,18,40,.96),rgba(13,13,25,.94));border:1px solid #a47bce66;border-radius:14px;box-shadow:inset 0 1px 0 #e4d6ff0d;position:relative;overflow:hidden}
 .card:after{content:"";position:absolute;bottom:0;left:18px;right:18px;height:2px;background:linear-gradient(90deg,#52d9cc,#a16ee5,#e497d3)}
 header{padding:0 4px 13px;border-bottom:1px solid #ffffff12;margin-bottom:10px}.top{display:flex;justify-content:space-between;align-items:center}.brand{font-size:10px;letter-spacing:2.6px;color:#bd9bdf;font-weight:700}.status{font-size:9px;letter-spacing:1px;color:#a49bb4}.status.live{color:#56e5d0}h1{font-size:19px;letter-spacing:-.4px;margin:8px 0 0;font-weight:750}
-.rows{display:grid;gap:6px}.row{display:grid;grid-template-columns:48px minmax(0,1fr);align-items:center;gap:12px;min-height:64px;padding:7px 8px;border-radius:9px;background:#ffffff03}.row:last-child{background:#e5bb7710}.icon{width:44px;height:44px;border-radius:50%;position:relative;display:grid;place-items:center;background:var(--tone);box-shadow:inset 0 1px 0 #ffffff30;font-size:25px}.icon svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.counter{position:absolute;top:32px;left:50%;transform:translateX(-50%);border:1px solid #ffffff16;min-width:44px;padding:2px 6px;border-radius:8px;background:#101018;color:#fff;text-align:center;font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}.counter:before{content:'×';color:#a99dbb;font-size:9px;margin-right:3px}.effect{font-size:17px;line-height:1.2;font-weight:750;letter-spacing:-.25px}.detail{font-size:10px;color:#a99bb9;line-height:1.4;margin-top:4px}.row.heart .effect{color:#efd194}.row.like .effect{color:#a4ece0}footer{font-size:9px;line-height:1.5;color:#8d819f;padding:12px 4px 0}.stale{opacity:.72}
+.rows{display:grid;gap:6px}.row{display:grid;grid-template-columns:48px minmax(0,1fr);align-items:center;gap:12px;min-height:64px;padding:7px 8px;border-radius:9px;background:#ffffff03}.row:last-child{background:#e5bb7710}.icon{width:44px;height:44px;border-radius:50%;position:relative;display:grid;place-items:center;background:var(--tone);box-shadow:inset 0 1px 0 #ffffff30;font-size:25px}.icon img{width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 2px 3px #0006)}.icon.gift{background:transparent;box-shadow:none}.icon svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.counter{position:absolute;top:32px;left:50%;transform:translateX(-50%);border:1px solid #ffffff16;min-width:44px;padding:2px 6px;border-radius:8px;background:#101018;color:#fff;text-align:center;font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}.counter:before{content:'×';color:#a99dbb;font-size:9px;margin-right:3px}.effect{font-size:17px;line-height:1.2;font-weight:750;letter-spacing:-.25px}.detail{font-size:10px;color:#a99bb9;line-height:1.4;margin-top:4px}.row.heart .effect{color:#efd194}footer{font-size:9px;line-height:1.5;color:#8d819f;padding:12px 4px 0}.stale{opacity:.72}
 @media(prefers-reduced-motion:reduce){*{transition:none}}
 </style>
 <section class="card" id="card" aria-label="AC Fame activity guide">
@@ -21,27 +21,22 @@ header{padding:0 4px 13px;border-bottom:1px solid #ffffff12;margin-bottom:10px}.
 const params=new URLSearchParams(location.search),rows=document.querySelector('#rows'),statusLabel=document.querySelector('#status'),card=document.querySelector('#card');
 const bubble='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-6 4V6a2 2 0 0 1 2-2Z"/></svg>';
 const follow='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2m4-12v8m-4-4h8"/></svg>';
-const heart='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 5a5 5 0 0 0-8 1 5 5 0 0 0-8-1C-1 11 12 21 12 21S25 11 20 5Z"/></svg>';
-const definitions=[['comment','Your name','Comment',bubble,'#9847a7'],['follow','Follow highlight','Follow',follow,'#328cb9'],['like','Your photo','15 likes · Photo test',heart,'#3aab99'],['rose','Thank-you name','Rose','🌹','#722b50'],['necklace','Your photo','Necklace','💎','#6550a0'],['donut','Featured portrait','Donut','🍩','#a75576'],['heart','Top Supporter','Heart','💖','#94743f']];
-let mode=null,fields=new Map();
+const gift=name=>'<img src="/overlay/assets/'+name+'.webp" alt="" width="48" height="48">';
+const definitions=[['comment','Your name','Comment',bubble,'#9847a7'],['follow','Follow highlight','Follow',follow,'#328cb9'],['rose','Thank-you name','Rose',gift('rose'),''],['necklace','Your photo','Friendship Necklace',gift('necklace'),''],['donut','Featured portrait','Doughnut',gift('donut'),''],['heart','Top Supporter','Hearts',gift('heart'),'']];
+const fields=new Map();
+for(const [kind,effect,detail,icon,tone] of definitions){
+  const row=document.createElement('div');row.className='row '+kind;
+  const art=document.createElement('div');art.className='icon'+(tone?'':' gift');art.style.setProperty('--tone',tone);art.innerHTML=icon;
+  const count=document.createElement('span');count.className='counter';count.textContent='0';art.append(count);fields.set(kind,count);
+  const copy=document.createElement('div'),title=document.createElement('div'),caption=document.createElement('div');title.className='effect';caption.className='detail';
+  title.textContent=effect;caption.textContent=detail;
+  copy.append(title,caption);row.append(art,copy);rows.append(row);
+}
 function render(state){
-  if(mode!==state.photoTest){
-    mode=!!state.photoTest;rows.replaceChildren();fields=new Map();
-    for(const [kind,effect,detail,icon,tone] of definitions){
-      if(kind==='like'&&!mode)continue;
-      const row=document.createElement('div');row.className='row '+kind;
-      const art=document.createElement('div');art.className='icon';art.style.setProperty('--tone',tone);art.innerHTML=icon;
-      const count=document.createElement('span');count.className='counter';count.textContent='0';art.append(count);fields.set(kind,count);
-      const copy=document.createElement('div'),title=document.createElement('div'),caption=document.createElement('div');title.className='effect';caption.className='detail';
-      title.textContent=kind==='comment'&&mode?'Comments':effect;caption.textContent=kind==='comment'&&mode?'Name writing paused in photo test':detail;
-      copy.append(title,caption);row.append(art,copy);rows.append(row);
-    }
-    document.querySelector('#footnote').textContent=mode?'Photo test active · Likes are individual taps. Other counts are received events.':'Session events · Resets when you reconnect.';
-  }
   for(const [kind,field] of fields){const n=state.counts?.[kind];field.textContent=Number.isSafeInteger(n)&&n>=0?new Intl.NumberFormat('en-US',{notation:n>=10000?'compact':'standard',maximumFractionDigits:1}).format(n):'0';}
   statusLabel.textContent=state.status==='DISCONNECTED'?'STANDBY':(state.status||'STANDBY');statusLabel.classList.toggle('live',state.status==='LIVE');
 }
-render({photoTest:false,counts:{},status:'DISCONNECTED'});
+render({counts:{},status:'DISCONNECTED'});
 async function poll(){
   try{const response=await fetch('/overlay/state?'+new URLSearchParams({view:params.get('view')||''}),{cache:'no-store',signal:AbortSignal.timeout(5000)});if(!response.ok)throw Error('Unavailable');render(await response.json());card.classList.remove('stale');}
   catch{statusLabel.textContent='UNAVAILABLE';card.classList.add('stale');}
