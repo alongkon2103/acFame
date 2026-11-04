@@ -86,3 +86,15 @@ gap=true บอก cursor เก่ากว่า retention แต่ Roblox �
 - ต้องวัดโหลดจริงและตรวจ provider credentials/signing requirement จาก VPS ก่อนอ้างว่าพร้อมขาย
 
 ดูคู่มือ provider: https://github.com/zerodytrash/TikTok-Live-Connector
+
+## ผลทดสอบ 4 พฤศจิกายน 2026
+
+- Linux VPS Node 22: automated tests 8/8 ผ่าน หลัง deploy commit 53dd06c
+- Studio กด Connect จริงไป @huntsos: CONNECTING -> LIVE และรับ comment ผ่าน VPS/HTTPS/poll/RemoteEvent ถึง client; จอ Canvas สร้างองค์ประกอบวาดชื่อได้
+- Studio Demo ผ่าน client -> server -> client ครบ comment/follow/rose/necklace/donut/heart; จอปกติและ ChampionCanvas สร้างผลแสดงครบ พร้อมข้อความ TOP SUPPORTER การทดสอบนี้ใช้ Studio pixels ไม่ใช่รูป TikTok production
+- ตรวจ auth จริง: health 200, session poll ที่มี key 200, metrics ไม่มี key 401
+- แก้ enableExtendedGiftInfo=false เพราะการดึง catalog ก่อน connect ถูก provider ปฏิเสธ; ไม่จำเป็นต่อ mapping แบบ gift ID
+- รองรับ user.displayId และ gift.type ตาม protobuf ที่พบจริง พร้อม regression tests
+- ยืนยันจาก LIVE: gift 5655 / Rose / 1 diamond / type 1; ตั้ง GIFT_IDS บน VPS ให้ 5655 -> rose แล้ว (ยังไม่ได้ยืนยันการแสดง rose จริงจนถึงจอในรอบทดสอบ)
+- ยังไม่ยืนยัน LIVE จริงสำหรับ follow/necklace/donut/heart, gift IDs อีก 3 แบบ, avatar assets ใน published experience, permission ของผู้เล่นจริง, สอง Roblox servers พร้อมกัน และการตัดเน็ตจริง
+- ยังไม่ได้ Publish แมพ; ไม่มี secret ใน repository และ src/Config.luau ยังเป็น template key ว่าง อย่านำ template ไปทับ config ที่ตั้งใน Studio
