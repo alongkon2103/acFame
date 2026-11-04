@@ -95,6 +95,6 @@ gap=true บอก cursor เก่ากว่า retention แต่ Roblox �
 - ตรวจ auth จริง: health 200, session poll ที่มี key 200, metrics ไม่มี key 401
 - แก้ enableExtendedGiftInfo=false เพราะการดึง catalog ก่อน connect ถูก provider ปฏิเสธ; ไม่จำเป็นต่อ mapping แบบ gift ID
 - รองรับ user.displayId และ gift.type ตาม protobuf ที่พบจริง พร้อม regression tests
-- ยืนยันจาก LIVE: gift 5655 / Rose / 1 diamond / type 1; ตั้ง GIFT_IDS บน VPS ให้ 5655 -> rose แล้ว (ยังไม่ได้ยืนยันการแสดง rose จริงจนถึงจอในรอบทดสอบ)
-- ยังไม่ยืนยัน LIVE จริงสำหรับ follow/necklace/donut/heart, gift IDs อีก 3 แบบ, avatar assets ใน published experience, permission ของผู้เล่นจริง, สอง Roblox servers พร้อมกัน และการตัดเน็ตจริง
+- ยืนยันจาก LIVE: gift 5655 / Rose / 1 diamond / type 1; ตั้ง GIFT_IDS บน VPS ให้ 5655 -> rose แล้ว รอบสุดท้าย client รับและแสดง comment 7, follow 1 และ rose 2 รวม 10 รายการ ขณะสถานะยังเป็น LIVE
+- ยังไม่ยืนยัน LIVE จริงสำหรับ necklace/donut/heart, gift IDs อีก 3 แบบ, avatar assets ใน published experience, permission ของผู้เล่นจริง, สอง Roblox servers พร้อมกัน และการตัดเน็ตจริง
 - ยังไม่ได้ Publish แมพ; ไม่มี secret ใน repository และ src/Config.luau ยังเป็น template key ว่าง อย่านำ template ไปทับ config ที่ตั้งใน Studio
