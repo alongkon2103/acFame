@@ -1,11 +1,11 @@
 import http from 'node:http';
-import { timingSafeEqual } from 'node:crypto';
+import { timingSafeEqual, createHmac } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { readFileSync } from 'node:fs';
 import { Sessions } from './sessions.mjs';
 import { username, mapping } from './normalize.mjs';
 
-export function createServer({ key, sessions, overlayToken }) {
+export function createServer({ key, sessions, overlaySigningKey }) {
   if (typeof key !== 'string' || key.length < 20) throw Error('FAME_KEY must contain at least 20 characters');
   const secret = Buffer.from(key);
   const overlayHTML=readFileSync(new URL('./overlay.html',import.meta.url));
@@ -18,12 +18,9 @@ export function createServer({ key, sessions, overlayToken }) {
         res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Referrer-Policy':'no-referrer','X-Content-Type-Options':'nosniff'});res.end(overlayHTML);return;
       }
       if(url.pathname==='/overlay/state' && req.method==='GET') {
-        const supplied=Buffer.from(url.searchParams.get('token')||'');
-        const expected=Buffer.from(overlayToken||'');
-        if(expected.length<32 || supplied.length!==expected.length || !timingSafeEqual(expected,supplied)) return send(401,{error:'Unauthorized'});
-        const channel=username(url.searchParams.get('channel'));
-        if(!channel) return send(400,{error:'INVALID_USERNAME'});
-        return send(200,{current:sessions.overlay(channel)});
+        const view=url.searchParams.get('view');
+        if(!view || !/^[a-f0-9]{64}$/.test(view)) return send(401,{error:'Unauthorized'});
+        return send(200,{current:sessions.overlay(view)});
       }
       const supplied = Buffer.from(req.headers['x-fame-key'] || '');
       if (supplied.length !== secret.length || !timingSafeEqual(secret, supplied)) return send(401, { error: 'Unauthorized' });
@@ -45,7 +42,11 @@ export function createServer({ key, sessions, overlayToken }) {
         }
         const name = username(body?.username);
         if (!name) return send(400, { error: 'INVALID_USERNAME' });
-        return send(202, sessions.connect(token, name));
+        const owner=body.ownerId;
+        if(owner!==undefined && (!['number','string'].includes(typeof owner) || !/^-?\d+$/.test(String(owner)) || !Number.isSafeInteger(Number(owner)) || Number(owner)===0)) return send(400,{error:'INVALID_OWNER'});
+        const identity=owner===undefined ? 'session:'+token : 'player:'+Number(owner);
+        const view=createHmac('sha256',overlaySigningKey||key).update('ac-fame-overlay:'+identity).digest('hex');
+        return send(202,{...sessions.connect(token,name,view),overlayPath:'/overlay?view='+view});
       }
       const raw = url.searchParams.get('after');
       if (raw === null || !/^\d+$/.test(raw) || !Number.isSafeInteger(Number(raw))) return send(400, { error: 'INVALID_CURSOR' });
@@ -58,7 +59,7 @@ export function createServer({ key, sessions, overlayToken }) {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const { adapter } = await import('./adapter.mjs');
   const sessions = new Sessions(adapter(mapping(process.env.GIFT_IDS), mapping(process.env.AVATAR_ASSETS, true)));
-  const server = createServer({ key: process.env.FAME_KEY, sessions, overlayToken:process.env.OVERLAY_TOKEN });
+  const server = createServer({ key: process.env.FAME_KEY, sessions, overlaySigningKey:process.env.OVERLAY_SIGNING_KEY });
   const sweep = setInterval(() => sessions.sweep(), 30000); sweep.unref();
   server.listen(Number(process.env.PORT || 3210), process.env.HOST || '127.0.0.1', () => console.log('AC Fame bridge listening'));
   for (const signal of ['SIGINT','SIGTERM']) process.once(signal, () => {

@@ -43,7 +43,7 @@ function paint(current){
   profile.hidden=false;
 }
 async function poll(){
-  try{const response=await fetch('/overlay/state?'+new URLSearchParams({channel:params.get('channel')||'',token:params.get('token')||''}),{cache:'no-store',signal:AbortSignal.timeout(5000)});if(!response.ok)throw Error('Unavailable');paint((await response.json()).current);lastSuccess=Date.now();}
+  try{const response=await fetch('/overlay/state?'+new URLSearchParams({view:params.get('view')||''}),{cache:'no-store',signal:AbortSignal.timeout(5000)});if(!response.ok)throw Error('Unavailable');paint((await response.json()).current);lastSuccess=Date.now();}
   catch{if(Date.now()-lastSuccess>8000){profile.hidden=true;currentID='';}}
   setTimeout(poll,500);
 }

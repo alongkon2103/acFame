@@ -91,11 +91,12 @@ gap=true บอก cursor เก่ากว่า retention แต่ Roblox �
 
 ### Streaming Overlay
 
-เปิด `/overlay?channel=ชื่อช่อง&token=OVERLAY_TOKEN` ใน OBS Browser Source หรือแหล่งเว็บใน TikTok LIVE Studio ขนาด 640 x 176 พื้นหลังด้านนอกโปร่งใส มีกรอบธีมม่วง/ฟ้า AC Fame
-ตั้ง OVERLAY_TOKEN แบบสุ่มอย่างน้อย 32 ตัวอักษรใน bridge/.env แยกจาก FAME_KEY; token นี้อ่านได้เฉพาะข้อมูลโปรไฟล์ที่กำลังแสดง ไม่ใช้สั่ง Connect หรือเข้าถึงคิว/session token
+แมพใช้ 1 คนต่อเซิร์ฟเวอร์ เมื่อกด Connect เกมส่ง Roblox UserId ฝั่ง Server ไป backend แล้วส่งลิงก์ `/overlay?view=...` กลับให้ผู้เล่นคนนั้นเท่านั้น ในหน้า Connect มีช่องลิงก์กับปุ่มเลือกลิงก์ จากนั้นกด Ctrl+C / Cmd+C เพื่อนำไปวางใน OBS Browser Source หรือแหล่งเว็บใน TikTok LIVE Studio ขนาด 640 x 176
+ลิงก์ผูกกับผู้เล่นด้วย HMAC ไม่ใส่ UserId, FAME_KEY หรือ session token ลงใน URL; คนเดิมเข้าใหม่/เปลี่ยนช่องได้ลิงก์เดิม และ backend ปิด session เก่าของเจ้าของเดียวกัน สองคนใช้ TikTok ช่องเดียวกันไม่ปะปนกัน
+ตั้ง OVERLAY_SIGNING_KEY แบบสุ่มและเก็บเป็น secret ใน bridge/.env (ถ้าไม่ตั้งจะใช้ FAME_KEY เป็น signing key) เปลี่ยน signing key แล้วลิงก์เดิมจะเปลี่ยน OVERLAY_TOKEN แบบรวมและลิงก์ channel/token รุ่นเก่าเลิกใช้แล้ว
 FameServer แจ้ง POST /overlay/current เมื่อเริ่ม display/champion จริง Overlay จึงแสดงคนที่กำลังวาด ไม่ใช่คนล่าสุดที่กดไลก์เข้า backend (มีระยะ polling ประมาณ 0.5 วินาที)
 แสดง nickname, @handle, avatar, following/follower counts ที่ TikTok ส่งมา ถ้าไม่มีจำนวนแสดง — ไม่เดาค่า; ไม่มีงาน/ตัดการเชื่อมต่อจะซ่อน Overlay
-ใช้ `?preview=1` แทน query อื่นเพื่อดูดีไซน์ตัวอย่าง ไม่มีข้อมูลผู้ชมจริง หากมีหลาย Roblox servers ใช้ช่องเดียวกัน Overlay เลือกงานที่เริ่มล่าสุดในช่องนั้น
+ใช้ `?preview=1` แทน query อื่นเพื่อดูดีไซน์ตัวอย่าง ไม่มีข้อมูลผู้ชมจริง ผู้ถือ view link อ่านได้เฉพาะ Overlay ของเจ้าของนั้น ไม่สามารถสั่ง Connect หรืออ่านคิวคนอื่น การ restart backend จะล้าง session; Connect ใหม่แล้วลิงก์เดิมกลับมาใช้ได้
 หลังเปลี่ยน FameServer ใน Studio ต้อง Save/Publish ให้เกมจริงใช้สคริปต์ใหม่; ห้ามนำ src/Config.luau key ว่างไปทับ config ที่ตั้งไว้
 
 ### โหมดทดสอบใจ 15 ครั้ง -> รูป

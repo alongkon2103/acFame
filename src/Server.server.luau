@@ -18,8 +18,11 @@ local sessionToken=nil
 local generation=0
 local busy=false
 local connectCooldown={}
+local overlayUrl=nil
+local overlayOwnerId=nil
 local function canControl(p)
 	if Run:IsStudio() then return true end
+	if #Players:GetPlayers()==1 or connectionOwner==p then return true end
 	if game.PrivateServerOwnerId>0 and p.UserId==game.PrivateServerOwnerId then return true end
 	if game.CreatorType==Enum.CreatorType.User and p.UserId==game.CreatorId then return true end
 	return table.find(Config.AllowedUserIds or {},p.UserId)~=nil
@@ -119,7 +122,11 @@ Players.PlayerRemoving:Connect(function(p)
 	if connectionOwner==p then disconnect() end
 end)
 control.OnServerEvent:Connect(function(p,action,username)
-	if action=="sync" then control:FireClient(p,"permission",canControl(p)) return end
+	if action=="sync" then
+		control:FireClient(p,"permission",canControl(p))
+		if overlayOwnerId==p.UserId and overlayUrl then control:FireClient(p,"overlay",overlayUrl) end
+		return
+	end
 	if not canControl(p) then control:FireClient(p,"message","เฉพาะเจ้าของแมพหรือเจ้าของเซิร์ฟเวอร์ส่วนตัวเท่านั้น") return end
 	if os.clock()-(connectCooldown[p] or -10)<3 then return end
 	connectCooldown[p]=os.clock()
@@ -140,12 +147,17 @@ control.OnServerEvent:Connect(function(p,action,username)
 	busy=true connectionOwner=p sessionToken=Http:GenerateGUID(false)
 	local token=sessionToken local version=generation
 	connectionState("CONNECTING",username)
-	local ok=pcall(request,"/connect","POST",token,{username=username})
+	local ok,body=pcall(request,"/connect","POST",token,{username=username,ownerId=p.UserId})
 	if generation~=version then
 		pcall(request,"/disconnect","POST",token,{}) return
 	end
 	busy=false
 	if not ok then sessionToken=nil connectionState("ERROR") return end
+	if type(body)=="table" and type(body.overlayPath)=="string" and body.overlayPath:match("^/overlay%?view=%x+$") then
+		overlayUrl=Config.BridgeUrl..body.overlayPath
+		overlayOwnerId=p.UserId
+		control:FireClient(p,"overlay",overlayUrl)
+	end
 	local cursor=0
 	task.spawn(function()
 		while sessionToken==token and generation==version do

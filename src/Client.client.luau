@@ -45,6 +45,20 @@ local disconnectButton=make("TextButton",connectPanel,{Name="Disconnect",Positio
 for _,b in ipairs({connectButton,disconnectButton}) do make("UICorner",b,{CornerRadius=UDim.new(0,8)}) end
 local connectionMessage=label(connectPanel,"เปิดไลฟ์ TikTok แล้วกด Connect",UDim2.fromScale(.06,.78),UDim2.fromScale(.88,.16),white)
 connectionMessage.Name="ConnectionMessage"
+local overlayPanel=make("Frame",connectPanel,{Name="OverlayPanel",Position=UDim2.new(0,0,1,12),Size=UDim2.new(1.6,0,0,138),BackgroundColor3=Color3.fromRGB(18,12,35),Visible=false})
+make("UICorner",overlayPanel,{CornerRadius=UDim.new(0,12)})
+make("UIStroke",overlayPanel,{Thickness=1,Color=Color3.fromRGB(149,75,220)})
+label(overlayPanel,"OVERLAY ของคุณ · 640 × 176",UDim2.new(0,12,0,8),UDim2.new(1,-24,0,22),cyan)
+local overlayLink=make("TextBox",overlayPanel,{Name="OverlayLink",Position=UDim2.new(0,12,0,36),Size=UDim2.new(1,-24,0,32),BackgroundColor3=Color3.fromRGB(31,24,49),Text="",TextColor3=white,Font=Enum.Font.Gotham,TextSize=12,TextXAlignment=Enum.TextXAlignment.Left,ClearTextOnFocus=false,TextEditable=false})
+make("UICorner",overlayLink,{CornerRadius=UDim.new(0,6)})
+local selectOverlay=make("TextButton",overlayPanel,{Name="SelectOverlayLink",Position=UDim2.new(0,12,0,76),Size=UDim2.new(1,-24,0,28),BackgroundColor3=Color3.fromRGB(100,49,165),Text="เลือกลิงก์เพื่อคัดลอก",TextColor3=white,Font=Enum.Font.GothamBold,TextSize=14})
+make("UICorner",selectOverlay,{CornerRadius=UDim.new(0,6)})
+label(overlayPanel,"กด Ctrl+C / Cmd+C แล้ววางใน Browser Source",UDim2.new(0,12,0,110),UDim2.new(1,-24,0,18),Color3.fromRGB(183,166,206))
+local function selectLink()
+	overlayLink:CaptureFocus()
+	task.defer(function() overlayLink.CursorPosition=#overlayLink.Text+1 overlayLink.SelectionStart=1 end)
+end
+selectOverlay.Activated:Connect(selectLink)
 local messages={DISCONNECTED="เปิดไลฟ์ TikTok แล้วกด Connect",CONNECTING="กำลังเชื่อมต่อ…",LIVE="เชื่อมต่อแล้ว",OFFLINE="ช่องยังไม่เปิดไลฟ์ เปิดไลฟ์แล้วลองใหม่",ERROR="เชื่อมต่อไม่สำเร็จ กรุณาลองใหม่",RETRYING="ขาดการเชื่อมต่อ กำลังลองอีกครั้ง…",SETUP_REQUIRED="ระบบยังไม่พร้อม กรุณาติดต่อผู้ขาย"}
 local function updateConnection()
 	local s=folder:GetAttribute("BridgeStatus") or "DISCONNECTED"
@@ -65,6 +79,10 @@ disconnectButton.Activated:Connect(function() control:FireServer("disconnect") e
 control.OnClientEvent:Connect(function(kind,value)
 	if kind=="permission" then canConnect=value==true connectionToggle.Visible=canConnect if not canConnect then connectPanel.Visible=false end
 	elseif kind=="message" then connectionMessage.Text=tostring(value) end
+	if kind=="overlay" and type(value)=="string" then
+		overlayLink.Text=value
+		overlayPanel.Visible=true
+	end
 end)
 folder:GetAttributeChangedSignal("BridgeStatus"):Connect(updateConnection)
 folder:GetAttributeChangedSignal("Channel"):Connect(updateConnection)

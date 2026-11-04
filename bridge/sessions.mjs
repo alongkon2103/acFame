@@ -5,13 +5,15 @@ export class Sessions {
     this.items = new Map(); this.recent = new Map();
     this.metrics = { dropped: 0, duplicates: 0, connectFailures: 0, missingIds: 0, unmappedGifts: 0 };
   }
-  connect(token, name) {
+  connect(token, name, overlayId = null) {
     this.sweep();
     if (this.recent.has(token) && this.now() - this.recent.get(token) < 3000) throw Object.assign(Error('RATE_LIMIT'), { status: 429 });
-    if (!this.items.has(token) && this.items.size >= this.capacity) throw Object.assign(Error('CAPACITY'), { status: 429 });
+    const previous = overlayId && [...this.items].find(([,s])=>s.overlayId===overlayId);
+    if (!this.items.has(token) && !previous && this.items.size >= this.capacity) throw Object.assign(Error('CAPACITY'), { status: 429 });
+    if(previous) this.disconnect(previous[0]);
     this.disconnect(token);
     this.recent.set(token, this.now());
-    const s = { username: name, status: 'CONNECTING', touched: this.now(), cursor: 0, events: [], seen: new Set(), closed: false };
+    const s = { username: name, overlayId, status: 'CONNECTING', touched: this.now(), cursor: 0, events: [], seen: new Set(), closed: false };
     this.items.set(token, s);
     const terminal = status => {
       if (s.closed) return;
@@ -63,11 +65,11 @@ export class Sessions {
     s.currentOverlay={id:event.id,kind:event.kind,profile:event.profile,pixels:event.pixels,updatedAt:this.now()};
     return true;
   }
-  overlay(channel) {
+  overlay(view) {
     this.sweep();
-    let current=null;
-    for(const s of this.items.values()) if(!s.closed && s.username===channel && s.currentOverlay && (!current || s.currentOverlay.updatedAt>current.updatedAt)) current=s.currentOverlay;
-    return current;
+    if(!view) return null;
+    for(const s of this.items.values()) if(!s.closed && s.overlayId===view) return s.currentOverlay||null;
+    return null;
   }
   sweep() {
     for (const [token, s] of this.items) if (this.now() - s.touched >= this.ttl) this.disconnect(token);
