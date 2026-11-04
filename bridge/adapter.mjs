@@ -4,7 +4,7 @@ import { normalize } from './normalize.mjs';
 export function adapter(gifts, assets, Connection = TikTokLiveConnection) {
   return (name, emit, terminal, metrics) => {
     const connection = new Connection(name, {
-      enableExtendedGiftInfo: true, processInitialData: false,
+      enableExtendedGiftInfo: false, processInitialData: false,
       ...(process.env.SIGN_API_KEY ? { signApiKey: process.env.SIGN_API_KEY } : {}),
     });
     for (const [eventName, kind] of [['chat','comment'], ['follow','follow'], ['gift','gift']]) {

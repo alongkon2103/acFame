@@ -26,7 +26,7 @@ test('normalization, username validation and streak tiers', () => {
 test('provider adapter forwards actual event names, maps gifts and terminal states', async () => {
   let upstream;
   class FakeConnection extends EventEmitter {
-    constructor(name) { super(); assert.equal(name, 'channel'); upstream = this; }
+    constructor(name, options) { super(); assert.equal(name, 'channel'); assert.equal(options.enableExtendedGiftInfo, false, 'optional gift catalog must not block LIVE'); upstream = this; }
     async connect() {}
     disconnect() {}
   }
