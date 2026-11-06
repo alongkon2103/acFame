@@ -4,6 +4,7 @@ local Tween=game:GetService("TweenService")
 local RS=game:GetService("ReplicatedStorage")
 local player=Players.LocalPlayer
 local folder=RS:WaitForChild("ACFame")
+local EventQueue=require(folder:WaitForChild("EventQueue"))
 local FameUI=require(folder:WaitForChild("FameUI"))
 local ui=FameUI.new(player)
 local gui=ui.gui
@@ -40,8 +41,12 @@ local map=workspace:WaitForChild("ACFame_Backup")
 local BrushWriter=require(folder:WaitForChild("BrushWriter"))
 local ArtistController=require(folder:WaitForChild("ArtistController"))
 local PhotoPainter=require(folder:WaitForChild("PhotoPainter"))
+local DonutPortraitFrame=require(folder:WaitForChild("DonutPortraitFrame"))
 while player:GetAttribute("GameAccessAllowed")~=true do player:GetAttributeChangedSignal("GameAccessAllowed"):Wait() end
 local painter=ArtistController.new(map,player)
+local WritingAudio=require(folder:WaitForChild("WritingAudio"))
+local writingAudio=WritingAudio.new(folder)
+script.Destroying:Connect(function() writingAudio:destroy() end)
 local writing=nil
 local portraitPainting=nil
 local championPainting=nil
@@ -86,6 +91,8 @@ local activeCard=nil
 local history={}
 local pendingDisplays={}
 local archiving=false
+local completedHold=0
+local holdElapsed=0
 local function idleBoards()
 	root:ClearAllChildren() championRoot:ClearAllChildren()
 	label(root,"Your name belongs here.",UDim2.fromScale(.12,.38),UDim2.fromScale(.76,.18),Color3.fromRGB(224,211,244))
@@ -102,14 +109,16 @@ local function startWriting(e)
 	portraitPainting=nil
 	local isPhoto=e.kind=="necklace" or e.kind=="donut"
 	local isBig=e.kind=="donut"
-	local color=isBig and pink or cyan
+	completedHold=isBig and 3 or (isPhoto and 1 or 0)
+	holdElapsed=0
+	local color=isBig and gold or cyan
 	if isPhoto then
-		portraitPainting=PhotoPainter.new(card,e,{x=isBig and .40 or .42,y=.32,w=isBig and .20 or .16,h=isBig and .4667 or .3733},6)
-		if isBig then make("UIStroke",portraitPainting.holder,{Thickness=7,Color=pink}) end
+		portraitPainting=PhotoPainter.new(card,e,{x=isBig and .40 or .42,y=.32,w=isBig and .20 or .16,h=isBig and .4667 or .3733,circular=true},3)
+		DonutPortraitFrame.decorate(portraitPainting.holder,isBig)
 	end
-	writing=BrushWriter.new(card,e.name,{x=.07,y=isPhoto and .80 or .46,w=.86,h=isPhoto and .12 or .24},Color3.fromRGB(243,230,255),5.5)
+	writing=BrushWriter.new(card,e.name,{x=.07,y=isPhoto and .80 or .46,w=.86,h=isPhoto and .12 or .24},Color3.fromRGB(243,230,255),3)
 	local line=make("Frame",card,{BackgroundColor3=color,BorderSizePixel=0,Position=UDim2.fromScale(.12,isPhoto and .94 or .74),Size=UDim2.fromScale(0,.008)})
-	Tween:Create(line,TweenInfo.new(.7,Enum.EasingStyle.Sine,Enum.EasingDirection.Out,0,false,isPhoto and 11.5 or 5.5),{Size=UDim2.fromScale(.76,.008)}):Play()
+	Tween:Create(line,TweenInfo.new(.7,Enum.EasingStyle.Sine,Enum.EasingDirection.Out,0,false,isPhoto and 6 or 3),{Size=UDim2.fromScale(.76,.008)}):Play()
 	if e.kind=="follow" then label(card,"Following",UDim2.fromScale(.2,.79),UDim2.fromScale(.6,.12),Color3.fromRGB(15,146,143)) end
 	if e.kind=="rose" then label(card,"Thanks for the Rose!",UDim2.fromScale(.2,.82),UDim2.fromScale(.6,.08),pink) end
 end
@@ -135,7 +144,7 @@ local function archiveWriting()
 end
 local function show(e)
 	if activeCard or archiving then
-		if #pendingDisplays<150 then table.insert(pendingDisplays,e) end
+		if #pendingDisplays<150 then EventQueue.push(pendingDisplays,e) end
 	else startWriting(e) end
 end
 local wingRest={}
@@ -177,6 +186,7 @@ local function showChampion(e,quiet)
 end
 folder.Display.OnClientEvent:Connect(function(kind,e,quiet)
 	if kind=="reset" then
+		writingAudio:stop()
 		ui.hint.Text="Leave your name on the wall."
 		displayVersion+=1 cameraVersion+=1 wings={} writing=nil portraitPainting=nil championPainting=nil
 		activeCard=nil archiving=false history={} pendingDisplays={}
@@ -194,7 +204,13 @@ Run.RenderStepped:Connect(function(dt)
 	if championPainting and not championPainting.done then championPainting:step(dt) end
 	if portraitPainting and not portraitPainting.done then uv=portraitPainting:step(dt)
 	elseif writing and not writing.done then uv,lift=writing:step(dt) end
-	if writing and writing.done and (not portraitPainting or portraitPainting.done) then archiveWriting() uv=nil lift=nil end
+	writingAudio:step(dt,writing~=nil and not writing.done and (not portraitPainting or portraitPainting.done),lift)
+	if writing and writing.done and (not portraitPainting or portraitPainting.done) then
+		uv=nil lift=nil
+		if holdElapsed==0 and activeCard then activeCard:SetAttribute("CompletedAt",os.clock()) end
+		holdElapsed+=dt
+		if holdElapsed>=completedHold then archiveWriting() end
+	end
 	painter:step(dt,uv,lift)
 end)
 idleBoards()

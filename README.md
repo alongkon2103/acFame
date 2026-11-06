@@ -134,3 +134,13 @@ FameServer แจ้ง POST /overlay/current เมื่อเริ่ม dis
 - ตรวจซ้ำกับ [Euler TH API](https://api.eulerstream.com/webcast/gifts?region=TH) วันที่ 5 พฤศจิกายน 2026 (736 gifts): ID ตรงครบทุกแบบ; Rose/Necklace/Doughnut เป็น type 1 รอ repeatEnd ส่วน Hand Heart 5660 เป็น type 2 ส่งทันที ไม่ต้องรอ repeatEnd เก็บเฉพาะ 4 รายการสาธารณะใน bridge/fixtures/euler-th-gifts.json สำหรับ regression test; ไม่เก็บ signed download URL
 - ยังไม่ยืนยันการส่ง LIVE จริงสำหรับ necklace/donut/hand hearts, avatar assets ใน published experience, permission ของผู้เล่นจริง, สอง Roblox servers พร้อมกัน และการตัดเน็ตจริง; ถ้าไม่มี AVATAR_ASSETS ของผู้ชม เกมยังแสดง @ แทนรูป ไม่ใช่รูป TikTok อัตโนมัติ
 - ยังไม่ได้ Publish แมพ; ไม่มี secret ใน repository และ src/Config.luau ยังเป็น template key ว่าง อย่านำ template ไปทับ config ที่ตั้งใน Studio
+
+## แก้ชื่อและรูปผู้ชม 6 พฤศจิกายน 2026
+
+Backend ส่ง displayName จาก TikTok nickname (fallback handle แบบไม่มี @) ให้ ViewerIdentity ในแมพตรวจผ่าน TextService และเลือกชื่อที่ผ่านกรอง หากไม่มีชื่อผ่านใช้ Viewer ไม่กู้ข้อความที่ Roblox กรองแล้ว
+
+รูปจาก Necklace/Doughnut/Hand Heart โหลดจาก HTTPS TikTok CDN เท่านั้น จำกัด 2MB, timeout, 16M decoded pixels และงานพร้อมกัน 2 งาน คิว 64; sharp แปลงเป็น 32×32 RGB ส่ง pixels 1024 จุดให้ PortraitPayload และ PhotoPainter เดิม ไม่ต้องอัปโหลดเป็น asset หรือมี Open Cloud key รายผู้ชม ตั้ง AllowProfilePixels=true ใน FameConfig ฝั่ง Server; Studio ปัจจุบันตั้งไว้แล้ว ไม่มีอีเวนต์ likes สร้างภาพ
+
+ดาวน์โหลดล้มเหลวจะยังส่งงานชื่อและนับ avatarFailures; รูปที่ไม่มีทั้ง pixels และ avatarAssetId ยังเป็นภาพสำรอง ไม่ปลอมรูปผู้ชม ปิด session แล้วไม่ส่งผลภาพที่โหลดเสร็จภายหลัง
+
+ซิงก์ FameServer/FameClient/PhotoPainter/ViewerIdentity/PortraitPayload รุ่นที่มีอยู่ใน Studio กลับเข้า repo เพื่อเก็บงานเดิม รวมภาพวงกลมของ Doughnut ไว้ ต้อง Publish แมพปัจจุบันให้ลูกค้าใช้รุ่นที่รองรับ profile pixels

@@ -16,7 +16,7 @@ test('normalization, username validation and streak tiers', () => {
   assert.equal(normalize('gift', data, { 1: 'rose' }), null);
   assert.equal(normalize('gift', { ...data, repeatEnd: true }, { 1: 'rose' }).kind, 'rose');
   const e = normalize('comment', data, {}, { viewer: '123' });
-  assert.equal(e.name, '@viewer'); assert.equal(e.avatarAssetId, '123');
+  assert.equal(e.name, 'viewer'); assert.equal(e.avatarAssetId, '123');
   assert.equal(e.id, 'comment:9876543210987654321');
   assert.equal(normalize('gift', { ...data, repeatEnd: true }, {}), null);
   assert.equal(normalize('comment', { msgId: Number.MAX_SAFE_INTEGER + 1, uniqueId: 'a' }), null);
@@ -26,7 +26,7 @@ test('normalization, username validation and streak tiers', () => {
 test('current provider protobuf user.displayId becomes the viewer handle', () => {
   const event = normalize('comment', {user:{displayId:'viewer_actual',nickname:'Not the handle'},common:{msgId:'9876543210987654321'}});
   assert.equal(event?.uniqueId,'viewer_actual');
-  assert.equal(event?.name,'@viewer_actual');
+  assert.equal(event?.name,'Not the handle');
 });
 test('current gift.type streak emits only on repeatEnd', () => {
   const data={user:{displayId:'viewer'},common:{msgId:'1'},giftId:'5655',gift:{type:1,name:'Rose',diamondCount:1},repeatEnd:0};

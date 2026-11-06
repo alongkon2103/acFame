@@ -6,6 +6,9 @@ local Text = game:GetService("TextService")
 local Config = require(script.Parent.FameConfig)
 local Access=require(script.Parent:WaitForChild("AccessControl"))
 local folder = RS:WaitForChild("ACFame")
+local EventQueue=require(folder:WaitForChild("EventQueue"))
+local ViewerIdentity=require(folder:WaitForChild("ViewerIdentity"))
+local PortraitPayload=require(folder:WaitForChild("PortraitPayload"))
 local event = folder:WaitForChild("Display")
 local demo = folder:WaitForChild("Demo")
 local queue, seen, seenOrder, cooldown = {}, {}, {}, {}
@@ -82,23 +85,17 @@ local function normalize(raw, trustedDemo)
 	if type(raw) ~= "table" or not kinds[raw.kind] then return end
 	local id = tostring(raw.id or ""):sub(1,120)
 	if id == "" or seen[id] then return end
-	local name = tostring(raw.name or raw.uniqueId or "viewer"):sub(1,160)
-	if not utf8.len(name) then name = "viewer" end
-	if not trustedDemo and not Run:IsStudio() then
-		local host = Players:GetPlayers()[1]
-		if not host then return end
-		local ok, filtered = pcall(function()
-			return Text:FilterStringAsync(name, host.UserId):GetNonChatStringForBroadcastAsync()
-		end)
-		name = ok and filtered or "viewer"
-	end
-	local e = {id=id,kind=raw.kind,name=name,uniqueId=tostring(raw.uniqueId or ""):sub(1,80)}
-	local asset = tostring(raw.avatarAssetId or "")
-	if asset:match("^%d+$") then e.avatarAssetId = asset end
-	if Run:IsStudio() and Config.AllowStudioPixels and type(raw.pixels)=="table" and #raw.pixels==1024 then
-		local valid=true
-		for _,v in ipairs(raw.pixels) do if type(v)~="number" or v~=math.floor(v) or v<0 or v>16777215 then valid=false break end end
-		if valid then e.pixels=raw.pixels end
+local host=Players:GetPlayers()[1]
+	if not trustedDemo and not Run:IsStudio() and not host then return end
+	local name=ViewerIdentity.name(raw,function(candidate)
+		if trustedDemo or Run:IsStudio() then return candidate end
+		return Text:FilterStringAsync(candidate,host.UserId):GetNonChatStringForBroadcastAsync()
+	end)
+	local e={id=id,kind=raw.kind,name=name,uniqueId=tostring(raw.uniqueId or ""):sub(1,80)}
+	e.avatarAssetId=ViewerIdentity.asset(raw.avatarAssetId)
+	e.pixels=PortraitPayload.read(raw.pixels,Config.AllowProfilePixels==true or (Run:IsStudio() and Config.AllowStudioPixels))
+	if raw.kind=="necklace" or raw.kind=="donut" or raw.kind=="heart" then
+		folder:SetAttribute("LastPortraitStatus",e.pixels and "PIXELS_READY" or e.avatarAssetId and "ASSET_PROVIDED" or "NO_IMAGE_FROM_BACKEND")
 	end
 	seen[id]=true table.insert(seenOrder,id)
 	if #seenOrder>2000 then seen[table.remove(seenOrder,1)]=nil end
@@ -108,7 +105,6 @@ local function accept(raw, trustedDemo, expectedGeneration)
 	local e=normalize(raw,trustedDemo)
 	if expectedGeneration and generation~=expectedGeneration then return end
 	if not e then return end
-	if e.kind=="heart" then champion=e event:FireAllClients("champion",e) updateOverlay(e) return end
 	if #queue >= Config.MaxQueue then
 		-- Prefer gifts over comments under load; memory stays bounded.
 		local removeIndex
@@ -116,7 +112,7 @@ local function accept(raw, trustedDemo, expectedGeneration)
 		if not removeIndex then return end
 		table.remove(queue,removeIndex)
 	end
-	table.insert(queue,e)
+	EventQueue.push(queue,e)
 end
 demo.OnServerEvent:Connect(function(player,kind)
 	if not Access.allowed(player) then return end
@@ -205,10 +201,14 @@ game:BindToClose(function() if sessionToken then pcall(request,"/disconnect","PO
 task.spawn(function()
 	while true do
 		if #queue>0 then
-			current=table.remove(queue,1)
-			event:FireAllClients("display",current)
-			updateOverlay(current)
-			task.wait((current.kind=="necklace" or current.kind=="donut") and (Config.PhotoDisplaySeconds or 14) or Config.DisplaySeconds)
+			local nextEvent=table.remove(queue,1)
+			if nextEvent.kind=="heart" then
+				champion=nextEvent event:FireAllClients("champion",nextEvent) updateOverlay(nextEvent)
+				task.wait(7.2)
+			else
+				current=nextEvent event:FireAllClients("display",current) updateOverlay(current)
+				task.wait(current.kind=="donut" and (Config.LargePhotoDisplaySeconds or 9.7) or current.kind=="necklace" and (Config.PhotoDisplaySeconds or 7.7) or (Config.DisplaySeconds or 3.7))
+			end
 		else task.wait(0.2) end
 	end
 end)

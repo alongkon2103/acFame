@@ -40,6 +40,8 @@ export function normalize(type, data, gifts = {}, assets = {}) {
   } catch {}
   event.profile = {handle,nickname:typeof user.nickname==='string' ? Array.from(user.nickname).slice(0,80).join('') : handle,
     following:count(user.followInfo?.followingCount),followers:count(user.followInfo?.followerCount),avatarUrl};
+  event.displayName = event.profile.nickname.trim() || handle;
+  event.name = event.displayName;
   if (Buffer.byteLength(event.id) > 120) return null;
   const asset = Object.hasOwn(assets, handle.toLowerCase()) && assets[handle.toLowerCase()];
   if (asset) event.avatarAssetId = asset;

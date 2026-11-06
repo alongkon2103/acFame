@@ -12,6 +12,7 @@ return {
 	DisplaySeconds = 8,
 	PhotoDisplaySeconds = 14,
 	MaxQueue = 150,
-	-- Public experiences must use uploaded, moderated Roblox image assets.
+	-- The server validates profile pixels; uploaded Roblox image assets remain supported.
 	AllowStudioPixels = true,
+	AllowProfilePixels = true,
 }
