@@ -72,7 +72,7 @@ local function boardView()
 	local viewport=camera.ViewportSize
 	local aspect=math.max(.5,viewport.X/math.max(1,viewport.Y))
 	local tangent=math.tan(math.rad(60/2))
-	local distance=math.max(78,112/(2*tangent*aspect*.92))
+	local distance=math.max(66,96/(2*tangent*aspect*.92))
 	return CFrame.lookAt(Vector3.new(-5,15,distance),Vector3.new(-5,18,0))
 end
 local viewButton=ui.viewButton
