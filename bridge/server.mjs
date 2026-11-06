@@ -4,6 +4,7 @@ import { pathToFileURL } from 'node:url';
 import { readFileSync } from 'node:fs';
 import { Sessions } from './sessions.mjs';
 import { username, mapping } from './normalize.mjs';
+import {writingPaths} from './writing.mjs';
 
 export function createServer({ key, sessions, overlaySigningKey }) {
   if (typeof key !== 'string' || key.length < 20) throw Error('FAME_KEY must contain at least 20 characters');
@@ -32,13 +33,14 @@ export function createServer({ key, sessions, overlaySigningKey }) {
       if (url.pathname === '/metrics' && req.method === 'GET') return send(200, { activeSessions: sessions.items.size, ...sessions.metrics });
       const token = req.headers['x-fame-session'];
       if (typeof token !== 'string' || !/^[a-zA-Z0-9-]{32,100}$/.test(token)) return send(400, { error: 'INVALID_SESSION' });
-      if (!['/connect','/disconnect','/session/events','/overlay/current','/overlay/link'].includes(url.pathname)) return send(404, { error: 'Not found' });
+      if (!['/connect','/disconnect','/session/events','/overlay/current','/overlay/link','/writing/paths'].includes(url.pathname)) return send(404, { error: 'Not found' });
       if (req.method !== (url.pathname === '/session/events' ? 'GET' : 'POST')) return send(405, { error: 'METHOD_NOT_ALLOWED' });
       if (req.method === 'POST') {
         let size = 0; const chunks = [];
         for await (const chunk of req) { size += chunk.length; if (size > 8192) return send(413, { error: 'BODY_TOO_LARGE' }); chunks.push(chunk); }
         let body;
         try { body = JSON.parse(Buffer.concat(chunks).toString()); } catch { return send(400, { error: 'INVALID_JSON' }); }
+        if(url.pathname==='/writing/paths')return send(200,await writingPaths(body?.text));
         if (url.pathname === '/disconnect') { sessions.disconnect(token); return send(200, { status: 'DISCONNECTED' }); }
         if(url.pathname==='/overlay/current') {
           if(typeof body?.id!=='string' || body.id.length>120 || !Number.isSafeInteger(body.revision) || body.revision<1) return send(400,{error:'INVALID_DISPLAY'});

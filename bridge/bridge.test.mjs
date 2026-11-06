@@ -106,6 +106,10 @@ test('HTTP contract: auth, JSON errors, connect, poll and idempotent disconnect'
   const base = `http://127.0.0.1:${server.address().port}`;
   const headers = { 'X-Fame-Key': 'secret'.repeat(6), 'X-Fame-Session': token };
   assert.equal((await fetch(base + '/health')).status, 200);
+  assert.equal((await fetch(base+'/writing/paths',{method:'POST',body:'{"text":"Alice"}'})).status,401);
+  const paths=await fetch(base+'/writing/paths',{method:'POST',headers,body:JSON.stringify({text:'น้ำฝน 🌟'})});
+  assert.equal(paths.status,200);const writing=await paths.json();assert.equal(writing.text,'น้ำฝน');assert.ok(writing.strokes.length>0);
+  assert.equal((await fetch(base+'/writing/paths',{method:'POST',headers,body:JSON.stringify({text:'a'.repeat(161)})})).status,400);
   assert.equal((await fetch(base + '/connect', { method: 'POST' })).status, 401);
   assert.equal((await fetch(base + '/connect', { method: 'POST', headers, body: '{' })).status, 400);
   assert.equal((await fetch(base + '/connect', { method: 'POST', headers, body: JSON.stringify({username:'@one'}) })).status, 202);

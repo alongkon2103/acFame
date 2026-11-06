@@ -8,6 +8,7 @@ local Access=require(script.Parent:WaitForChild("AccessControl"))
 local folder = RS:WaitForChild("ACFame")
 local EventQueue=require(folder:WaitForChild("EventQueue"))
 local ViewerIdentity=require(folder:WaitForChild("ViewerIdentity"))
+local WritingPayload=require(folder:WaitForChild("WritingPayload"))
 local PortraitPayload=require(folder:WaitForChild("PortraitPayload"))
 local event = folder:WaitForChild("Display")
 local demo = folder:WaitForChild("Demo")
@@ -92,6 +93,14 @@ local host=Players:GetPlayers()[1]
 		return Text:FilterStringAsync(candidate,host.UserId):GetNonChatStringForBroadcastAsync()
 	end)
 	local e={id=id,kind=raw.kind,name=name,uniqueId=tostring(raw.uniqueId or ""):sub(1,80)}
+	if Config.BridgeUrl~="" and #Config.BridgeKey>=20 then
+		local ok,result=pcall(request,"/writing/paths","POST",Http:GenerateGUID(false),{text=name})
+		if ok then
+			e.writing=WritingPayload.read(result)
+			if e.writing and type(result.text)=="string" and utf8.len(result.text) and #result.text<=640 then e.name=result.text end
+		end
+		folder:SetAttribute("LastWritingStatus",e.writing and "STROKES_READY" or "PATH_UNAVAILABLE")
+	end
 	e.avatarAssetId=ViewerIdentity.asset(raw.avatarAssetId)
 	e.pixels=PortraitPayload.read(raw.pixels,Config.AllowProfilePixels==true or (Run:IsStudio() and Config.AllowStudioPixels))
 	if raw.kind=="necklace" or raw.kind=="donut" or raw.kind=="heart" then

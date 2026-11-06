@@ -118,7 +118,7 @@ local function startWriting(e)
 		portraitPainting=PhotoPainter.new(card,e,{x=isBig and .40 or .42,y=.32,w=isBig and .20 or .16,h=isBig and .4667 or .3733,circular=true},3)
 		DonutPortraitFrame.decorate(portraitPainting.holder,isBig)
 	end
-	writing=BrushWriter.new(card,e.name,{x=.07,y=isPhoto and .80 or .46,w=.86,h=isPhoto and .12 or .24},Color3.fromRGB(243,230,255),3)
+	writing=BrushWriter.new(card,e.name,{x=.07,y=isPhoto and .80 or .46,w=.86,h=isPhoto and .12 or .24},Color3.fromRGB(243,230,255),3,e.writing)
 	local line=make("Frame",card,{BackgroundColor3=color,BorderSizePixel=0,Position=UDim2.fromScale(.12,isPhoto and .94 or .74),Size=UDim2.fromScale(0,.008)})
 	Tween:Create(line,TweenInfo.new(.7,Enum.EasingStyle.Sine,Enum.EasingDirection.Out,0,false,isPhoto and 6 or 3),{Size=UDim2.fromScale(.76,.008)}):Play()
 	if e.kind=="follow" then label(card,"Following",UDim2.fromScale(.2,.79),UDim2.fromScale(.6,.12),Color3.fromRGB(15,146,143)) end

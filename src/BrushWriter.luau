@@ -71,10 +71,25 @@ local glyphs={
 local function catmull(a,b,c,d,t)
 	return (b*2+(c-a)*t+(a*2-b*5+c*4-d)*t*t+(-a+b*3-c*3+d)*t*t*t)*.5
 end
-function Brush.new(parent,text,rect,ink,seconds)
+function Brush.new(parent,text,rect,ink,seconds,path)
 	local holder=Instance.new("Frame") holder.Name="BrushLettering" holder.BackgroundTransparency=1
 	holder.Position=UDim2.fromScale(rect.x,rect.y) holder.Size=UDim2.fromScale(rect.w,rect.h) holder.Parent=parent
 	local self=setmetatable({holder=holder,rect=rect,seconds=seconds,elapsed=0,index=0,commands={},ink=ink,done=false}, {__index=Brush})
+	if path then
+		local width,height=1400*rect.w,600*rect.h
+		local scale=math.min(width/path.width,height*.8/path.height)
+		local origin=Vector2.new((width-path.width*scale)/2,(height-path.height*scale)/2)
+		for _,stroke in ipairs(path.strokes) do
+			local previous=nil
+			for _,p in ipairs(stroke) do
+				local point=origin+Vector2.new(p[1],p[2])*scale
+				if not previous then table.insert(self.commands,{point=point,lift=true})
+				else table.insert(self.commands,{a=previous,point=point,thickness=math.max(1.7,path.thickness*scale)}) end
+				previous=point
+			end
+		end
+		return self
+	end
 	local chars={} local supported=true
 	for first,last in utf8.graphemes(text) do
 		local ch=text:sub(first,last)

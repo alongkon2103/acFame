@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import {cleanWritingName} from './writing.mjs';
 
 export const kinds = new Set(['comment', 'follow', 'rose', 'necklace', 'donut', 'heart']);
 export function mapping(value, assets = false) {
@@ -40,7 +41,7 @@ export function normalize(type, data, gifts = {}, assets = {}) {
   } catch {}
   event.profile = {handle,nickname:typeof user.nickname==='string' ? Array.from(user.nickname).slice(0,80).join('') : handle,
     following:count(user.followInfo?.followingCount),followers:count(user.followInfo?.followerCount),avatarUrl};
-  event.displayName = event.profile.nickname.trim() || handle;
+  event.displayName = cleanWritingName(event.profile.nickname) || cleanWritingName(handle) || 'Viewer';
   event.name = event.displayName;
   if (Buffer.byteLength(event.id) > 120) return null;
   const asset = Object.hasOwn(assets, handle.toLowerCase()) && assets[handle.toLowerCase()];
