@@ -137,7 +137,7 @@ FameServer แจ้ง POST /overlay/current เมื่อเริ่ม dis
 
 ## แก้ชื่อและรูปผู้ชม 6 พฤศจิกายน 2026
 
-จังหวะเขียน: BrushWriter.cursor ให้จุดเริ่มโดยยังไม่ปล่อยหมึก FameClient รอตัวละครพร้อมและวางพู่กันก่อน advance การเขียน ArtistController จับปลายพู่กัน/ตำแหน่งตัวละครตรงกับเส้นปัจจุบันขณะเขียน โดยยังเคลื่อนกลับตำแหน่งพักอย่างนุ่มนวล ทดสอบ tests/WritingSync.spec.luau และ Studio Demo แล้วมี InkStroke ภายใน 350ms แรกและพู่กันปรากฏพร้อมกัน ชื่อไทย/Unicode ยังใช้ font reveal เดิม ไม่ใช่เส้นพู่กันรายอักษร
+จังหวะเขียน: BrushWriter.cursor ให้จุดเริ่มโดยยังไม่ปล่อยหมึก FameClient รอตัวละครพร้อมและวางพู่กันก่อน advance การเขียน ArtistController จับปลายพู่กัน/ตำแหน่งตัวละครตรงกับเส้นปัจจุบันขณะเขียน โดยยังเคลื่อนกลับตำแหน่งพักอย่างนุ่มนวล ทดสอบ tests/WritingSync.spec.luau และ Studio Demo แล้วมี InkStroke ภายใน 350ms แรกและพู่กันปรากฏพร้อมกัน ชื่อไทย/Unicode เปลี่ยนเป็นเส้นพู่กันจาก Backend ตามหัวข้อด้านล่างแล้ว
 
 Backend ส่ง displayName จาก TikTok nickname (fallback handle แบบไม่มี @) ให้ ViewerIdentity ในแมพตรวจผ่าน TextService และเลือกชื่อที่ผ่านกรอง หากไม่มีชื่อผ่านใช้ Viewer ไม่กู้ข้อความที่ Roblox กรองแล้ว
 
@@ -146,3 +146,13 @@ Backend ส่ง displayName จาก TikTok nickname (fallback handle แบ�
 ดาวน์โหลดล้มเหลวจะยังส่งงานชื่อและนับ avatarFailures; รูปที่ไม่มีทั้ง pixels และ avatarAssetId ยังเป็นภาพสำรอง ไม่ปลอมรูปผู้ชม ปิด session แล้วไม่ส่งผลภาพที่โหลดเสร็จภายหลัง
 
 ซิงก์ FameServer/FameClient/PhotoPainter/ViewerIdentity/PortraitPayload รุ่นที่มีอยู่ใน Studio กลับเข้า repo เพื่อเก็บงานเดิม รวมภาพวงกลมของ Doughnut ไว้ ต้อง Publish แมพปัจจุบันให้ลูกค้าใช้รุ่นที่รองรับ profile pixels
+
+## เส้นเขียนหลายภาษาและตัดอิโมจิ
+
+หลัง ViewerIdentity กรองชื่อแล้ว FameServer ขอ POST /writing/paths ด้วย key ฝั่ง Server เท่านั้น Backend ใช้ Pango/font fallback จัดรูปตัวอักษร สระ วรรณยุกต์ และตัวเชื่อม จากนั้นหาเส้นกึ่งกลางและส่งทางเดินพู่กันกลับมา WritingPayload ตรวจขอบเขต/จำนวนจุดก่อนให้ BrushWriter สร้าง InkStroke ทีละช่วง ตัวละครใช้ cursor และ lift เหมือนชื่ออังกฤษ; ไม่ใช่การเผย TextLabel ซ้ายไปขวา ทิศทางอาหรับ/ฮีบรูเรียงจากขวาไปซ้าย ลำดับเส้นเป็นการตามรูปทรงฟอนต์ ไม่ใช่แบบเรียนคัดลายมือของแต่ละภาษา
+
+ตัดอิโมจิเป็น grapheme cluster รวมสีผิว/ZWJ/ธง/เลข keycap โดยรักษาสระ วรรณยุกต์ ตัวเลขและเครื่องหมายทั่วไป ชื่อมีแต่อิโมจิใช้ Viewer ฟอนต์ที่ติดตั้งบน VPS เป็นตัวกำหนดอักษรที่แสดงได้; อักษรหายากอาจต้องติดตั้งฟอนต์เพิ่ม
+
+จำกัดข้อความ 160 code points, ภาพตัวอักษร 1028×132, จุดเส้นไม่เกิน 16000, งานพร้อมกัน 2 และ cache 128 ชื่อ; ถ้า API ล้มเหลว LastWritingStatus=PATH_UNAVAILABLE และใช้ renderer สำรองเดิม ไม่ปิดตัวกรอง Roblox
+
+ทดสอบ Backend 20/20 บนเครื่องและ VPS รวมภาษาไทย จีน ญี่ปุ่น เกาหลี อาหรับ ฮินดี ชื่อมี accent/เครื่องหมาย และตัดอิโมจิ ใน Studio Play อีเวนต์ Demo เรียก Backend จริงได้ STROKES_READY และส่ง fixture น้ำฝนให้ตัวละครวาดได้ 803 InkStroke โดยไม่มี UnicodeInkReveal ส่วน tests/UnicodeWriting.spec.luau สำหรับรันเป็น server test Script ระหว่าง Play; การเรียก HTTP ผ่าน Assistant ใน Edit ถูก allowlist ของ Assistant ปฏิเสธ

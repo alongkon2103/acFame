@@ -1,3 +1,4 @@
+-- Run as a server test Script during Studio Play; Assistant Edit HTTP requests use a separate allowlist.
 local Http=game:GetService("HttpService")
 local f=game.ReplicatedStorage.ACFame
 local configCopy=game.ServerScriptService.FameConfig:Clone()
