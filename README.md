@@ -137,6 +137,8 @@ FameServer แจ้ง POST /overlay/current เมื่อเริ่ม dis
 
 ## แก้ชื่อและรูปผู้ชม 6 พฤศจิกายน 2026
 
+จังหวะเขียน: BrushWriter.cursor ให้จุดเริ่มโดยยังไม่ปล่อยหมึก FameClient รอตัวละครพร้อมและวางพู่กันก่อน advance การเขียน ArtistController จับปลายพู่กัน/ตำแหน่งตัวละครตรงกับเส้นปัจจุบันขณะเขียน โดยยังเคลื่อนกลับตำแหน่งพักอย่างนุ่มนวล ทดสอบ tests/WritingSync.spec.luau และ Studio Demo แล้วมี InkStroke ภายใน 350ms แรกและพู่กันปรากฏพร้อมกัน ชื่อไทย/Unicode ยังใช้ font reveal เดิม ไม่ใช่เส้นพู่กันรายอักษร
+
 Backend ส่ง displayName จาก TikTok nickname (fallback handle แบบไม่มี @) ให้ ViewerIdentity ในแมพตรวจผ่าน TextService และเลือกชื่อที่ผ่านกรอง หากไม่มีชื่อผ่านใช้ Viewer ไม่กู้ข้อความที่ Roblox กรองแล้ว
 
 รูปจาก Necklace/Doughnut/Hand Heart โหลดจาก HTTPS TikTok CDN เท่านั้น จำกัด 2MB, timeout, 16M decoded pixels และงานพร้อมกัน 2 งาน คิว 64; sharp แปลงเป็น 32×32 RGB ส่ง pixels 1024 จุดให้ PortraitPayload และ PhotoPainter เดิม ไม่ต้องอัปโหลดเป็น asset หรือมี Open Cloud key รายผู้ชม ตั้ง AllowProfilePixels=true ใน FameConfig ฝั่ง Server; Studio ปัจจุบันตั้งไว้แล้ว ไม่มีอีเวนต์ likes สร้างภาพ

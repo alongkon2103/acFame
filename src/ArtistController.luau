@@ -72,21 +72,23 @@ function Artist:setEnabled(enabled)
 	if enabled then self:takeControl() else self:release() end
 	for _,v in self.brush:GetChildren() do if v:IsA("BasePart") then v.Transparency=enabled and 0 or 1 end end
 end
+function Artist:isReady()
+	return self.enabled and self.saved~=nil and self.root~=nil and self.root.Parent~=nil
+end
 function Artist:step(dt,uv,lift)
-	if not self.enabled or not self.saved or not self.root or not self.root.Parent then return end
+	if not self:isReady() then return end
 	local t=os.clock()
 	local canvas=self.map.Canvas
 	local target=canvas.CFrame:PointToWorldSpace(Vector3.new(uv and (uv.X-.5)*canvas.Size.X or -13,uv and (.5-uv.Y)*canvas.Size.Y or -5,canvas.Size.Z/2+.06))
 	if lift then target+=Vector3.new(0,0,.22) end
-	self.tip=self.tip:Lerp(target,math.min(1,dt*35))
+	self.tip=uv and target or self.tip:Lerp(target,math.min(1,dt*35))
 	local direction=Vector3.new(.12,-.3,1).Unit
 	local grip=self.tip+direction*1.05
 	local desired=grip.X-self.shoulderOffset.X-self.reach*.25
-	local oldX=self.x self.x+= (desired-self.x)*math.min(1,dt*25)
-	local moving=math.abs(self.x-oldX)>dt*.2
+	self.x=uv and desired or self.x+(desired-self.x)*math.min(1,dt*25)
 	local groundY=self.groundY or .06
 	local rootY=uv and math.max(groundY+self.floorOffset,grip.Y-self.shoulderOffset.Y+self.reach*.1) or groundY+self.floorOffset
-	self.y=self.y or rootY self.y+=(rootY-self.y)*math.min(1,dt*25)
+	self.y=uv and rootY or (self.y or rootY)+(rootY-(self.y or rootY))*math.min(1,dt*25)
 	local z=grip.Z+self.reach*.55
 	self.root.CFrame=CFrame.new(self.x,self.y,z)*CFrame.Angles(0,-.18,0)
 	local floorY=self.y-self.floorOffset

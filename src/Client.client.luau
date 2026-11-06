@@ -48,6 +48,7 @@ local WritingAudio=require(folder:WaitForChild("WritingAudio"))
 local writingAudio=WritingAudio.new(folder)
 script.Destroying:Connect(function() writingAudio:destroy() end)
 local writing=nil
+local writingPrimed=false
 local portraitPainting=nil
 local championPainting=nil
 local screen=map:WaitForChild("Canvas"):WaitForChild("SurfaceGui")
@@ -100,6 +101,7 @@ local function idleBoards()
 	label(championRoot,"HALL OF FAME",UDim2.fromScale(.16,.4),UDim2.fromScale(.68,.12),gold)
 end
 local function startWriting(e)
+	writingPrimed=false
 	ui:setCurrent(e)
 	displayVersion+=1 local version=displayVersion
 	if #history==0 then root:ClearAllChildren() end
@@ -203,7 +205,10 @@ Run.RenderStepped:Connect(function(dt)
 	local uv,lift
 	if championPainting and not championPainting.done then championPainting:step(dt) end
 	if portraitPainting and not portraitPainting.done then uv=portraitPainting:step(dt)
-	elseif writing and not writing.done then uv,lift=writing:step(dt) end
+	elseif writing and not writing.done and painter:isReady() then
+		if not writingPrimed then uv=writing:cursor() lift=true writingPrimed=true
+		else uv,lift=writing:step(dt) end
+	end
 	writingAudio:step(dt,writing~=nil and not writing.done and (not portraitPainting or portraitPainting.done),lift)
 	if writing and writing.done and (not portraitPainting or portraitPainting.done) then
 		uv=nil lift=nil

@@ -114,6 +114,13 @@ function Brush.new(parent,text,rect,ink,seconds)
 	end
 	return self
 end
+function Brush:cursor()
+	if self.clip then
+		return Vector2.new(self.rect.x+self.rect.w*math.clamp(self.elapsed/self.seconds,0,1),self.rect.y+self.rect.h*.55),self.elapsed==0
+	end
+	local command=self.commands[math.max(1,self.index)]
+	if command then return Vector2.new(self.rect.x+command.point.X/1400,self.rect.y+command.point.Y/600),command.lift end
+end
 function Brush:step(dt)
 	if not self.holder.Parent then self.done=true return end
 	self.elapsed+=dt
